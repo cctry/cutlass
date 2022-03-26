@@ -96,6 +96,32 @@ struct Transpose<ElementCount_, layout::PitchLinearShape<4,4> , int8_t> {
   }
 };
 
+/// Specialization for 4x4 transpose
+template <int ElementCount_, typename Element>
+struct Transpose<ElementCount_, layout::PitchLinearShape<4,4> , Element> {
+
+    static const int kElementCount = ElementCount_;
+    using TransposeShape = layout::PitchLinearShape<4,4>;
+    using Fragment = cutlass::Array<Element, kElementCount>;
+
+    static_assert(!(kElementCount % TransposeShape::kCount), "Shape needs to be multiple of 16 elements to do a 4x4 transpose");
+
+    CUTLASS_DEVICE 
+    void transform(Fragment& dst, Fragment& src) {
+    /// Assuming src and dst are the same fragment
+    #define diag_swap(r, c) {auto& src_pos = src[i + r * 4 + c]; auto& dst_pos = dst[i + c * 4 + r]; auto tmp = src_pos; src_pos = dst_pos; dst_pos = tmp;}
+    CUTLASS_PRAGMA_UNROLL
+    for (int i = 0; i < kElementCount; i += TransposeShape::kCount){
+      diag_swap(0, 1);
+      diag_swap(0, 2);
+      diag_swap(0, 3);
+      diag_swap(1, 2);
+      diag_swap(1, 3);
+      diag_swap(2, 3);
+    }
+  }
+};
+    
 }  // namespace thread
 }  // namespace layout
 }  // namespace cutlass
