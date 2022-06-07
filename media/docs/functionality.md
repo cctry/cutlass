@@ -2,6 +2,22 @@
 
 [README](/README.md#documentation) > **Functionality**
 
+- N - Column Major Matrix
+- T - Row Major matrix
+- {N,T} x {N,T} - All combinations, i.e. NN, NT, TN, TT
+- [NHWC](/include/cutlass/layout/tensor.h#L63-206) - 4 dimension tensor used for convolution
+- [NCxHWx](/include/cutlass/layout/tensor.h#L290-395) - Interleaved 4 dimension tensor used for convolution
+- f - float point
+- s - signed int
+- b - bit
+- cf - complex float
+- bf16 - bfloat16
+- tf32 - tfloat32
+- Simt - Use Simt CUDA Core MMA
+- TensorOp - Use Tensor Core MMA
+- SpTensorOp - Use Sparse Tensor Core MMA
+- WmmaTensorOp - Use WMMA abstraction to use Tensor Core MMA
+
 # Functionality
 
 ## Device-level GEMM

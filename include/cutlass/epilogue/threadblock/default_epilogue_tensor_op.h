@@ -158,6 +158,30 @@ struct DefaultIteratorsTensorOp<int32_t, int32_t, 4, ThreadblockShape, WarpShape
   static int const kFragmentsPerIteration = 1;
 };
 
+/// Partial specialization for float <= int32_t x 4
+template <
+  typename ThreadblockShape,
+  typename WarpShape,
+  typename InstructionShape,
+  typename ThreadMap
+>
+struct DefaultIteratorsTensorOp<float, int32_t, 4, ThreadblockShape, WarpShape, InstructionShape, ThreadMap> {
+  
+  using WarpTileIterator = cutlass::epilogue::warp::TileIteratorTensorOp<
+    WarpShape,
+    InstructionShape,
+    int32_t,
+    layout::RowMajor
+  >;
+
+  using SharedLoadIterator = cutlass::epilogue::threadblock::SharedLoadIterator<
+    ThreadMap,
+    int32_t
+  >;
+
+  static int const kFragmentsPerIteration = 1;
+};
+
 /// Partial specialization for half <= float x 8 epilogues avoids shared memory bank conflicts.
 template <
   typename ThreadblockShape,
@@ -215,10 +239,10 @@ struct DefaultIteratorsTensorOp<
   InstructionShape, 
   ThreadMap> {
 
-  static_assert(cutlass::platform::is_same<ElementOutput, cutlass::int4b_t>::value ||
-                cutlass::platform::is_same<ElementOutput, cutlass::uint4b_t>::value ||
-                cutlass::platform::is_same<ElementOutput, int8_t>::value ||
-                cutlass::platform::is_same<ElementOutput, uint8_t>::value,
+  static_assert(platform::is_same<ElementOutput, cutlass::int4b_t>::value ||
+                platform::is_same<ElementOutput, cutlass::uint4b_t>::value ||
+                platform::is_same<ElementOutput, int8_t>::value ||
+                platform::is_same<ElementOutput, uint8_t>::value,
                 "ElementOutput needs to be 4 or 8 bit (unsigned) int.");
 
    static_assert((ElementsPerAccess == 16 || ElementsPerAccess == 8),
