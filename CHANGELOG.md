@@ -1,5 +1,26 @@
 # NVIDIA CUTLASS Changelog
 
+## [2.10.0](https://github.com/NVIDIA/cutlass/releases/tag/v2.10.0) (2022-08-23)
+* [CUTLASS Python](/examples/40_cutlass_py) now supports GEMM, CONV, Group GEMM for different data types as well as different epilogue flavours.  
+* Optimizations for CUTLASS's [Grouped GEMM](examples/24_gemm_grouped/gemm_grouped.cu) kernel.  Threadblock scheduling part is improved.  Some computation can be moved to the host side if applicable.  [Grouped Syr2k](examples/38_syr2k_grouped/syr2k_grouped.cu) kernels are added, too.
+* Optimizations for [GEMM+Softmax](examples/35_gemm_softmax).  All the reduction computation is fused into the previous GEMM.  More template arguments are provided to fine tune the performance.
+* [Grouped GEMM for Multihead Attention](examples/41_multi_head_attention).  This general group gemm based MHA does not require the sequence length of all GEMMs to be the same which makes it most useful for natural language processing.
+* [GEMM + Layer norm fusion for Ampere](examples/37_gemm_layernorm_gemm_fusion/) splits the layernorm into two parts and both of them can be fused into the GEMMs before and after separately.  In addition to use square sum to compute variance of layernorm, [Shift-K](https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Computing_shifted_data) is provided if square sum raise numerical issues.
+* [GEMM Epilogue Permutation Fusion](examples/39_gemm_permute) can apply user provided permutation layout mapping in the GEMM epilogue.
+* [Grouped convolution targeting implicit GEMM](test/unit/conv/device/group_conv2d_fprop_implicit_gemm_f16nhwc_f16nhwc_f16nhwc_tensor_op_f32_sm80.cu) introduces the first group convolution implementation to CUTLASS.  It is an Analytical implementation, not an Optimized.  The restrictions are: 1) input and output channel number should be multiple of group number. 2) split-K is not supported.  The implementation has 2 modes: 
+  * kSingleGroup: output channel per group is multiple of Threadblock tile N.
+  * kMultipleGroup: Threadblock tile N is multiple of output channel per group.
+* [Depthwise separable convolution](test/unit/conv/device/depthwise_fprop_implicit_gemm_f16nhwc_f16nhwc_f16nhwc_simt_f16_sm60.cu) introduces the first depthwise convolution which is also Analytical for now.  The restrictions are: 1) SIMT only 2) No split-K 3) input channel equals to output channel equals to group number.
+* Standalone [Layernorm](/tools/util/include/cutlass/util/device_layernorm.h) and [Pooling](/tools/util/include/cutlass/util/device_nhwc_pooling.h) kernels.
+* [Back-to-back GEMM/CONV](examples/13_two_tensor_op_fusion) relaxes the requirement that the first GEMM K dimension needs to be the multiple of Threadblock Tile K dimension.
+* Optimal performance using [**CUDA 11.6u2**](https://developer.nvidia.com/cuda-downloads)
+* Updates and bugfixes from the community (thanks!)
+
+* **Deprecation announcement:** CUTLASS plans to deprecate the following:
+  * Maxwell and Pascal GPU architectures
+  * Ubuntu 16.04
+  * CUDA 10.2
+
 ## [2.9.0](https://github.com/NVIDIA/cutlass/releases/tag/v2.9.0) (2022-04-21)
 
 * [First layer Convolution kernels](/test/unit/conv/device/conv2d_fprop_fixed_channels_f16nhwc_f16nhwc_f16nhwc_tensor_op_f32_sm80.cu) specialized for small channel counts and reduced alignment
@@ -14,13 +35,13 @@
   * [SYMM](/test/unit/gemm/device/symm_f32n_f32n_tensor_op_fast_f32_ls_sm80.cu) with [emitter](/tools/library/scripts/symm_operation.py)
   * [TRMM](/test/unit/gemm/device/trmm_f32n_f32t_f32t_tensor_op_fast_f32_ls_sm80.cu) with [emitter](/tools/library/scripts/trmm_operation.py)
   * [Unit tests](/test/unit/gemm/device/testbed_rank_k_universal.h)
-* [CUTLASS Python](/example/40_cutlass_py) demonstrating JIT compilation of CUTLASS kernels and a Python-based runtime using [CUDA Python](https://developer.nvidia.com/cuda-python)
+* [CUTLASS Python](/examples/40_cutlass_py) demonstrating JIT compilation of CUTLASS kernels and a Python-based runtime using [CUDA Python](https://developer.nvidia.com/cuda-python)
   * [Python-based runtime](/tools/library/scripts/rt.py) interoperable with existing emitters
 * [GEMM + Softmax example](/examples/35_gemm_softmax)
 * [Gather and Scatter Fusion with GEMM](/examples/36_gather_scatter_fusion) can gather inputs and scatters outputs based on indices vectors in the same GEMM kernel.
   * It can select random rows in a row major matrix.
   * It can select random columns in a column major matrix.
-* [Back-to-back GEMM/CONV](examples/13_two_tensor_op_fusion) fully supports buffering the previous GEMM/CONV results in the shared memory for the latter one to use.  It can eliminate register spill when the tile size is big.
+* [Back-to-back GEMM/CONV](examples/13_two_tensor_op_fusion) fully supports buffering the first GEMM/CONV results in the shared memory for the latter one to use.  It can eliminate register spill when the tile size is big.  Additionally, bias vector add is supported in the first GEMM/CONV.
   * Supported kernels: GEMM and CONV.
   * Supported types: fp16 and int8.
   * Supported architectures: Turing and Ampere.
@@ -30,11 +51,13 @@
 * Epilogue enhancement:
   * Eliminate bank conflicts in int8 tensor core kernels.
   * Half2 usage if epilogue compute type is fp16.
-  * More activation functions: Silu, Hardswish.
+  * More activation functions: Silu, Hardswish, Leaky Relu.
   * New elementwise fusion pattern for [residual block](/include/cutlass/epilogue/thread/linear_combination_residual_block.h).
+* [Group GEMM](/examples/24_gemm_grouped) thread block number calculation fix which helps to launch the intended number of threadblocks to fully occupy the GPUs.
 * [Parallel GEMM splitk](https://github.com/NVIDIA/cutlass/pull/277) support in the CUTLASS profiler.
 * Optimal performance using [**CUDA 11.6u2**](https://developer.nvidia.com/cuda-downloads)
 * Updates and bugfixes from the community (thanks!)
+
 
 ## [2.8.0](https://github.com/NVIDIA/cutlass/releases/tag/v2.8.0) (2021-11-19)
 

@@ -128,6 +128,7 @@ class complex
 {
  public:
   /// Type alias for scalar type
+  using value_type = T;
 
  private:
   //

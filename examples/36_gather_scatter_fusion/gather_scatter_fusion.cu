@@ -41,9 +41,8 @@
 //        int b_c_d_col = tensor_indices.at({j, 0});
 //
 //        for (int k = 0; k < options.index_size; ++k) {
-//            int a_col = tensor_indices.at({k, 0});
 //            tensor_d_ref.at({i, b_c_d_col}) +=
-//              alpha * tensor_a.at({i, a_col}) * tensor_b.at({k, b_c_d_col});
+//              alpha * tensor_a.at({i, k}) * tensor_b.at({k, b_c_d_col});
 //        }
 //      }
 //
@@ -51,7 +50,7 @@
 //
 // The gather/scatter operation works best when we can still keep the biggest
 // alignment. For example, when the matrix is row major, we select rows. When
-// the matrix is column major, we selct columns.
+// the matrix is column major, we select columns.
 //
 // Not all the combination of gather and scatter are legal. For example, if A is
 // row major and C/D is column major, we cannot gather A and scatter C/D at the
@@ -69,6 +68,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <fstream>
 #include <random>
 #include <numeric>
 
@@ -187,8 +187,8 @@ struct Options {
 // elements in input matrices.
 using ElementAccumulator = float;                   // <- data type of accumulator
 using ElementComputeEpilogue = ElementAccumulator;  // <- data type of epilogue operations
-using ElementInputA = cutlass::half_t;;             // <- data type of elements in input matrix A
-using ElementInputB = cutlass::half_t;;             // <- data type of elements in input matrix B
+using ElementInputA = cutlass::half_t;              // <- data type of elements in input matrix A
+using ElementInputB = cutlass::half_t;              // <- data type of elements in input matrix B
 using ElementOutput = float;                        // <- data type of elements in output matrix D
 
 // The code section below describes matrix layout of input and output matrices.
@@ -252,11 +252,11 @@ using Gemm = cutlass::gemm::device::GemmUniversal<ElementInputA,
                                                   SwizzleThreadBlock,
                                                   NumStages,
                                                   8,     /*alignmentA*/
-                                                  8,     /*alignmengB*/
+                                                  8,     /*alignmentB*/
                                                   cutlass::arch::OpMultiplyAdd,
                                                   cutlass::ComplexTransform::kNone,
                                                   cutlass::ComplexTransform::kNone,
-                                                  true,  /*GatherA*/
+                                                  false, /*GatherA*/
                                                   true,  /*GatherB*/
                                                   true   /*ScatterD*/
                                                  >;
@@ -272,13 +272,13 @@ int run(Options &options) {
   // Create a tuple of problem size for matrix multiplication
   cutlass::gemm::GemmCoord problem_size_real(problem_size.m(),
                                              options.index_size,
-                                             options.index_size);
+                                             problem_size.k());
 
   // Initialize tensors using CUTLASS helper functions
   cutlass::HostTensor<ElementInputA, LayoutInputA> tensor_a(
       problem_size.mk());  // <- Create matrix A with dimensions M x K
   cutlass::HostTensor<ElementInputB, LayoutInputB> tensor_b(
-      cutlass::make_Coord(options.index_size, problem_size.n()));  // <- Create matrix B with dimensions K x N
+      problem_size.kn());  // <- Create matrix B with dimensions K x N
   cutlass::HostTensor<ElementOutput, LayoutOutput> tensor_c(
       problem_size.mn());  // <- Create matrix C with dimensions M x N 
   cutlass::HostTensor<ElementOutput, LayoutOutput> tensor_d_scattered(
@@ -352,7 +352,7 @@ int run(Options &options) {
       tensor_b.layout().stride(),
       tensor_c.layout().stride(),
       tensor_d_scattered.layout().stride(),
-      tensor_indices.device_data(),       // <- pointer to index vector to gather A on device
+      nullptr,                            // <- pointer to index vector to gather A on device
       tensor_indices.device_data(),       // <- pointer to index vector to gather B on device
       tensor_indices.device_data()};      // <- pointer to index vector to scatter D on device
 
@@ -387,12 +387,11 @@ int run(Options &options) {
       for (int j = 0; j < options.index_size; ++j) {
         int b_c_d_col = tensor_indices.at({j, 0});
 
-        for (int k = 0; k < options.index_size; ++k) {
-            int a_col = tensor_indices.at({k, 0});
+        for (int k = 0; k < problem_size.k(); ++k) {
             tensor_d_ref.at({i, b_c_d_col}) +=
-              alpha * tensor_a.at({i, a_col}) * tensor_b.at({k, b_c_d_col});
+              alpha * tensor_a.at({i, k}) * tensor_b.at({k, b_c_d_col});
         }
-       
+
         tensor_d_ref.at({i, b_c_d_col}) += (beta * tensor_c.at({i, b_c_d_col}));
       }
     }
@@ -515,7 +514,7 @@ int main(int argc, const char ** argv) {
   cudaDeviceProp props;
   CUDA_CHECK(cudaGetDeviceProperties(&props, 0));
 
-  if (!(props.major > 8 || (props.major == 8 && props.minor >= 0))) {
+  if (!(props.major >= 8)) {
     std::cerr << "Ampere Tensor Ops must be run on a machine with compute capability at least 80."
               << std::endl;
     notSupported = true;

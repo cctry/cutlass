@@ -40,7 +40,7 @@
 
 #include "cutlass/cutlass.h"
 #include "cutlass/numeric_types.h"
-#include "cutlass/transform/thread/unaryOp.h"
+#include "cutlass/transform/thread/unary_op.h"
 
 #include "cutlass/array.h"
 #include "cutlass/half.h"
@@ -185,7 +185,8 @@ struct NumericConverter<int8_t, float, FloatRoundStyle::round_to_nearest> {
   CUTLASS_DEVICE
   static result_type convert(source_type const & s) {
 
-    int32_t intermediate = __float2int_rn(s);
+    int32_t intermediate;
+    asm volatile("cvt.rni.sat.s8.f32 %0, %1;" : "=r"(intermediate) : "f"(s));
 
     return static_cast<result_type>(intermediate);
   }
@@ -206,7 +207,8 @@ struct NumericConverter<int8_t, float, FloatRoundStyle::round_toward_zero> {
   CUTLASS_DEVICE
   static result_type convert(source_type const & s) {
 
-    int32_t intermediate = __float2int_rz(s);
+    int32_t intermediate;
+    asm volatile("cvt.rzi.sat.s8.f32 %0, %1;" : "=r"(intermediate) : "f"(s));
 
     return static_cast<result_type>(intermediate);
   }
@@ -228,7 +230,14 @@ struct NumericConverter<int8_t, float, FloatRoundStyle::round_to_nearest> {
 
   static result_type convert(source_type const & s) {
     std::fesetround(FE_TONEAREST);
-    int32_t intermediate =  (result_type)std::nearbyint(s);
+    int32_t intermediate = (int32_t)std::nearbyint(s);
+
+    // Low-end saturation
+    intermediate = std::max(intermediate, (int32_t)std::numeric_limits<int8_t>::lowest());
+
+    // High-end saturation
+    intermediate = std::min(intermediate, (int32_t)std::numeric_limits<int8_t>::max());
+
     return static_cast<result_type>(intermediate);
   }
 
@@ -246,7 +255,14 @@ struct NumericConverter<int8_t, float, FloatRoundStyle::round_toward_zero> {
 
   static result_type convert(source_type const & s) {
     std::fesetround(FE_TOWARDZERO);
-    int32_t intermediate =  (result_type)std::nearbyint(s);
+    int32_t intermediate = (int32_t)std::nearbyint(s);
+
+    // Low-end saturation
+    intermediate = std::max(intermediate, (int32_t)std::numeric_limits<int8_t>::lowest());
+
+    // High-end saturation
+    intermediate = std::min(intermediate, (int32_t)std::numeric_limits<int8_t>::max());
+
     return static_cast<result_type>(intermediate);
   }
 
@@ -1254,6 +1270,40 @@ struct NumericArrayConverter<uint8_t, int, N, Round> {
 };
 
 #endif
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Partial specialization for Array<int8_t> <= Array<float>
+/// Conversion is performed with saturation regardless of setting of
+/// the `Round` template parameter.
+template <
+  int N,
+  FloatRoundStyle Round
+>
+struct NumericArrayConverter<int8_t, float, N, Round> {
+
+  using result_type = Array<int8_t, N>;
+  using source_type = Array<float, N>;
+  static FloatRoundStyle const round_style = Round;
+
+  CUTLASS_HOST_DEVICE
+  static result_type convert(source_type const & source) {
+    // Convert float to int
+    Array<int32_t, N> temporary;
+
+    NumericArrayConverter<int, float, N, Round> compute_converter;
+    temporary = compute_converter(source);
+
+    // Convert to int to int8_t
+    NumericArrayConverter<int8_t, int32_t, N, Round> destination_converter;
+    return destination_converter(temporary);
+  }
+
+  CUTLASS_HOST_DEVICE
+  result_type operator()(source_type const &s) {
+    return convert(s);
+  }
+};
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 

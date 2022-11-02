@@ -34,6 +34,7 @@
 
 #pragma once
 
+#include "cutlass/tensor_ref.h"
 #include "cutlass/aligned_buffer.h"
 #include "cutlass/arch/memory.h"
 #include "cutlass/array.h"
@@ -123,6 +124,13 @@ class MmaBase {
 
   /// Tensor reference to the B operand
   using TensorRefB = TensorRef<typename Operator::ElementB, typename Operator::LayoutB>;
+
+  static_assert(kWarpGemmIterations > 1,
+                "The pipelined structure requires at least two warp-level "
+                "GEMM operations.");
+
+  static_assert((kWarpGemmIterations % 2) == 0,
+                "Inner loop iteration must be an even number.");
 
   //
   // Nested structs
