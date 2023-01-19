@@ -34,6 +34,8 @@
 
 #pragma once
 
+#include "cutlass/cutlass.h"
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 namespace cutlass {
@@ -83,6 +85,10 @@ struct Sm80 {
 };
 struct Sm86 {
   static int const kMinComputeCapability = 86;
+};
+
+struct Sm90 {
+  static int const kMinComputeCapability = 90; 
 };
 
 /// Triggers a breakpoint on the device
