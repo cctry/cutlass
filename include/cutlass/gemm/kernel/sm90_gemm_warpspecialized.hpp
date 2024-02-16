@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /***************************************************************************************************
  * Copyright (c) 2023 - 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
@@ -198,8 +199,12 @@ public:
 
   static
   cutlass::Status
+<<<<<<< HEAD
   initialize_workspace(Arguments const& args, void* workspace = nullptr, cudaStream_t stream = nullptr,
     CudaHostAdapter* cuda_adapter = nullptr) {
+=======
+  initialize_workspace(Arguments const& args, void* workspace = nullptr, hipStream_t stream = nullptr) {
+>>>>>>> dfa93ce8 (hipify other headers)
     return Status::kSuccess;
   }
 

@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /***************************************************************************************************
  * Copyright (c) 2017 - 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
@@ -165,7 +166,7 @@ public:
   Status initialize(
     Arguments const &args, 
     void *workspace = nullptr, 
-    cudaStream_t stream = nullptr) {
+    hipStream_t stream = nullptr) {
     
     // initialize the params structure from the arguments
     params_ = typename UnderlyingKernel::Params(
@@ -176,11 +177,11 @@ public:
     int smem_size = int(sizeof(typename UnderlyingKernel::SharedStorage));
 
     if (smem_size >= (48 << 10)) {
-      cudaError_t result = cudaFuncSetAttribute(cutlass::Kernel<UnderlyingKernel>,
-                                    cudaFuncAttributeMaxDynamicSharedMemorySize,
+      hipError_t result = hipFuncSetAttribute(cutlass::Kernel<UnderlyingKernel>,
+                                    hipFuncAttributeMaxDynamicSharedMemorySize,
                                     smem_size);
 
-      if (result != cudaSuccess) {
+      if (result != hipSuccess) {
         return Status::kErrorInternal;
       }
     }
@@ -204,14 +205,14 @@ public:
   }
 
   /// Runs the kernel using initialized state.
-  Status run(cudaStream_t stream = nullptr) {
+  Status run(hipStream_t stream = nullptr) {
 
     // Launch reorder kernel
     if (params_.ptr_reordered_B != nullptr) {
       dim3 grid = ReorderKernel::get_grid_shape(params_);
       dim3 block = ReorderKernel::get_block_shape();
 
-      cutlass::Kernel<ReorderKernel><<<grid, block, 0, stream>>>(params_);
+     hipLaunchKernelGGL(( cutlass::Kernel<ReorderKernel>), dim3(grid), dim3(block), 0, stream, params_);
     }
 
     // Launch main kernel
@@ -224,20 +225,20 @@ public:
     int smem_size = int(params_.get_smem_size());
 
     // Make sure we can use that much shared memory.
-    cudaError_t status = 
-        cudaFuncSetAttribute(cutlass::Kernel<UnderlyingKernel>, cudaFuncAttributeMaxDynamicSharedMemorySize, smem_size);
-    if (status != cudaSuccess)
+    hipError_t status = 
+        hipFuncSetAttribute(cutlass::Kernel<UnderlyingKernel>, hipFuncAttributeMaxDynamicSharedMemorySize, smem_size);
+    if (status != hipSuccess)
       return Status::kErrorInternal;
 
-    cutlass::Kernel<UnderlyingKernel><<<grid, block, smem_size, stream>>>(params_);
+   hipLaunchKernelGGL(( cutlass::Kernel<UnderlyingKernel>), dim3(grid), dim3(block), smem_size, stream, params_);
 
-    cudaError_t result = cudaGetLastError();
+    hipError_t result = hipGetLastError();
 
-    return result == cudaSuccess ? Status::kSuccess : Status::kErrorInternal;
+    return result == hipSuccess ? Status::kSuccess : Status::kErrorInternal;
   }
 
   /// Runs the kernel using initialized state.
-  Status operator()(cudaStream_t stream = nullptr) {
+  Status operator()(hipStream_t stream = nullptr) {
     return run(stream);
   }
 
@@ -245,7 +246,7 @@ public:
   Status operator()(
     Arguments const &args, 
     void *workspace = nullptr, 
-    cudaStream_t stream = nullptr) {
+    hipStream_t stream = nullptr) {
     
     Status status = initialize(args, workspace, stream);
     

@@ -35,7 +35,7 @@
 
 #pragma once
 
-#include <cuda_runtime_api.h>
+#include <hip/hip_runtime_api.h>
 #include "cutlass/cutlass.h"
 #include "cutlass/trace.h"
 #if defined(__CUDACC_RTC__)
@@ -53,19 +53,19 @@ namespace cutlass {
 
 #ifndef NDEBUG
 #define Return_Status(cudaError_t_status)            \
-  if (cudaError_t_status != cudaSuccess) {           \
+  if (cudaError_t_status != hipSuccess) {           \
     fprintf(stderr,                                  \
             "[ ERROR: CUDA Runtime ] %s:%d: %s\n",   \
             __FILE__,                                \
             __LINE__,                                \
-            cudaGetErrorString(cudaError_t_status)); \
+            hipGetErrorString(cudaError_t_status)); \
     return Status::kInvalid;                         \
   } else {                                           \
     return Status::kSuccess;                         \
   }
 #else
 #define Return_Status(cudaError_t_status)          \
-  if (cudaError_t_status != cudaSuccess) {         \
+  if (cudaError_t_status != hipSuccess) {         \
     return Status::kInvalid;                       \
   } else {                                         \
     return Status::kSuccess;                       \
@@ -115,8 +115,8 @@ struct ClusterLauncher {
     CUTLASS_TRACE_HOST("Calling cudaFuncSetAttribute");
 #endif
     // This attribute was added in CUDA 11.8.
-    cudaError_t status =
-        cudaFuncSetAttribute(
+    hipError_t status =
+        hipFuncSetAttribute(
           kernel_function, cudaFuncAttributeNonPortableClusterSizeAllowed, 1);
     Return_Status(status);
 #else
@@ -131,7 +131,7 @@ struct ClusterLauncher {
       dim3 const cluster_dims,
       dim3 const block_dims,
       size_t const smem_size,
-      cudaStream_t cuda_stream,
+      hipStream_t cuda_stream,
       void const* kernel,
       void** kernel_params) {
 #if defined(CUTLASS_SM90_CLUSTER_LAUNCH_ENABLED)
@@ -166,7 +166,7 @@ struct ClusterLauncher {
         "And ClusterDims = "
         "(" << cluster_dims.x << ", " << cluster_dims.y << ", " << cluster_dims.z << ")\n");
 
-    cudaError_t status = cudaLaunchKernelExC(&launch_config, kernel, kernel_params);
+    hipError_t status = cudaLaunchKernelExC(&launch_config, kernel, kernel_params);
     Return_Status(status);
 #else
     CUTLASS_TRACE_HOST("ClusterLauncher: CUTLASS_SM90_CLUSTER_LAUNCH_ENABLED not defined! Aborting cluster launch.");
@@ -204,7 +204,7 @@ struct ClusterLaunchParams {
   int smem_size_in_bytes = 0;
 
   //! CUDA stream on which to launch the kernel.
-  cudaStream_t cuda_stream = nullptr;
+  hipStream_t cuda_stream = nullptr;
 };
 
 /// @brief Launch the kernel on the stream using cluster launch.

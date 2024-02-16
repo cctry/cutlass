@@ -318,7 +318,7 @@ public:
       void const *configuration_ptr,
       void *host_workspace,
       void *device_workspace,
-      cudaStream_t stream = nullptr) const override {
+      hipStream_t stream = nullptr) const override {
     Operator *op = new (host_workspace) Operator;
     return Status::kSuccess;
   }
@@ -328,7 +328,7 @@ public:
       void const *arguments_ptr,
       void *host_workspace,
       void *device_workspace = nullptr,
-      cudaStream_t stream = nullptr) const override {
+      hipStream_t stream = nullptr) const override {
 
     OperatorArguments args;
     Status status = update_arguments_(args, static_cast<GemmUniversalArguments const *>(arguments_ptr));

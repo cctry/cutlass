@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2017 - 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
@@ -156,7 +157,11 @@ void rmsnorm(cutlass::MatrixCoord tensor_size,
              TensorRef<T, layout::RowMajor> ref_output,
              TensorRef<T, layout::RowMajor> ref_input,
              TensorRef<T, layout::RowMajor> ref_weight,
+<<<<<<< HEAD
              cudaStream_t stream, float epsilon = 1e-5f){
+=======
+             hipStream_t stream, float epsilon = 1e-5){
+>>>>>>> dfa93ce8 (hipify other headers)
   const int m = tensor_size.row();
   const int n = tensor_size.column();
   T* output = ref_output.data();
@@ -167,18 +172,18 @@ void rmsnorm(cutlass::MatrixCoord tensor_size,
   if (n % 8 == 0 && std::is_same<T, cutlass::half_t>::value) {
     dim3 block(min(1024, (n / 8 + 31) / 32 * 32));
 
-    rmsnorm_twoPassAlgo_e8<<<grid, block, 0, stream>>>(
+   hipLaunchKernelGGL(( rmsnorm_twoPassAlgo_e8), dim3(grid), dim3(block), 0, stream, 
         (float4 *)output, (const float4 *)input, (const float4 *)weight, m, n, epsilon);
   } else {
     dim3 block(min(1024, ((n + 31)/32 + 31)/32*32));
 
-    rmsnorm_twoPassAlgo_e1<<<grid, block, 0, stream>>>(
+   hipLaunchKernelGGL(( rmsnorm_twoPassAlgo_e1), dim3(grid), dim3(block), 0, stream, 
         output, input, weight, m, n, epsilon);
   }
 
-  auto result = cudaGetLastError();
-  if (result != cudaSuccess) {
-    std::cerr << "CUDA error: " << cudaGetErrorString(result) << std::endl;
+  auto result = hipGetLastError();
+  if (result != hipSuccess) {
+    std::cerr << "CUDA error: " << hipGetErrorString(result) << std::endl;
     abort();
   }
 }

@@ -41,7 +41,7 @@
 */
 
 #if !defined(__CUDACC_RTC__)
-#include "cuda_runtime.h"
+#include "hip/hip_runtime.h"
 
 #include "cutlass/trace.h"
 #endif
@@ -62,20 +62,20 @@ struct KernelHardwareInfo {
 #if !defined(__CUDACC_RTC__)
   static inline int
   query_device_multiprocessor_count(int device_id = 0) {
-    cudaError_t result = cudaGetDevice(&device_id);
-    if (result != cudaSuccess) {
+    hipError_t result = hipGetDevice(&device_id);
+    if (result != hipSuccess) {
       CUTLASS_TRACE_HOST(
-        "  cudaGetDevice() returned error "
-        << cudaGetErrorString(result));
+        "  hipGetDevice() returned error "
+        << hipGetErrorString(result));
       return 0;
     }
     int multiprocessor_count;
-    result = cudaDeviceGetAttribute(&multiprocessor_count,
-      cudaDevAttrMultiProcessorCount, device_id);
-    if (result != cudaSuccess) {
+    result = hipDeviceGetAttribute(&multiprocessor_count,
+      hipDeviceAttributeMultiprocessorCount, device_id);
+    if (result != hipSuccess) {
       CUTLASS_TRACE_HOST(
-        "  cudaDeviceGetAttribute() returned error "
-        << cudaGetErrorString(result));
+        "  hipDeviceGetAttribute() returned error "
+        << hipGetErrorString(result));
       return 0;
     }
     return multiprocessor_count;

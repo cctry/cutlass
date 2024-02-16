@@ -171,7 +171,7 @@ struct UniversalParamsBase
   /// the memory allocated to workspace is at least as large as get_workspace_size().
   Status init_workspace(
     void *workspace,
-    cudaStream_t stream = nullptr)
+    hipStream_t stream = nullptr)
   {
     semaphore = static_cast<int *>(workspace);
     // Zero-initialize entire workspace
@@ -181,14 +181,14 @@ struct UniversalParamsBase
 
       CUTLASS_TRACE_HOST("  Initialize " << workspace_bytes << " workspace bytes");
 
-      cudaError_t result = cudaMemsetAsync(
+      hipError_t result = hipMemsetAsync(
         semaphore,
         0,
         workspace_bytes,
         stream);
 
-      if (result != cudaSuccess) {
-        CUTLASS_TRACE_HOST("  cudaMemsetAsync() returned error " << cudaGetErrorString(result));
+      if (result != hipSuccess) {
+        CUTLASS_TRACE_HOST("  hipMemsetAsync() returned error " << hipGetErrorString(result));
         return Status::kErrorInternal;
       }
     }

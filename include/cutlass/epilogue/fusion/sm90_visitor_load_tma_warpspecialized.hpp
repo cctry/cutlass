@@ -216,8 +216,12 @@ struct Sm90AuxLoad {
 
   template <class ProblemShape>
   static cutlass::Status
+<<<<<<< HEAD
   initialize_workspace(ProblemShape const& problem_shape, Arguments const& args, void* workspace, cudaStream_t stream,
     CudaHostAdapter* cuda_adapter = nullptr) {
+=======
+  initialize_workspace(ProblemShape const& problem_shape, Arguments const& args, void* workspace, hipStream_t stream) {
+>>>>>>> dfa93ce8 (hipify other headers)
     return cutlass::Status::kSuccess;
   }
 
@@ -415,8 +419,12 @@ struct Sm90ScalarBroadcast {
 
   template <class ProblemShape>
   static cutlass::Status
+<<<<<<< HEAD
   initialize_workspace(ProblemShape const& problem_shape, Arguments const& args, void* workspace, cudaStream_t stream,
     CudaHostAdapter *cuda_adapter = nullptr) {
+=======
+  initialize_workspace(ProblemShape const& problem_shape, Arguments const& args, void* workspace, hipStream_t stream) {
+>>>>>>> dfa93ce8 (hipify other headers)
     return cutlass::Status::kSuccess;
   }
 
@@ -587,8 +595,12 @@ struct Sm90RowBroadcast {
 
   template <class ProblemShape>
   static cutlass::Status
+<<<<<<< HEAD
   initialize_workspace(ProblemShape const& problem_shape, Arguments const& args, void* workspace, cudaStream_t stream,
     CudaHostAdapter* cuda_adapter = nullptr) {
+=======
+  initialize_workspace(ProblemShape const& problem_shape, Arguments const& args, void* workspace, hipStream_t stream) {
+>>>>>>> dfa93ce8 (hipify other headers)
     return cutlass::Status::kSuccess;
   }
 
@@ -774,8 +786,12 @@ struct Sm90ColBroadcast {
 
   template <class ProblemShape>
   static cutlass::Status
+<<<<<<< HEAD
   initialize_workspace(ProblemShape const& problem_shape, Arguments const& args, void* workspace, cudaStream_t stream,
     CudaHostAdapter* cuda_adapter = nullptr) {
+=======
+  initialize_workspace(ProblemShape const& problem_shape, Arguments const& args, void* workspace, hipStream_t stream) {
+>>>>>>> dfa93ce8 (hipify other headers)
     return cutlass::Status::kSuccess;
   }
 

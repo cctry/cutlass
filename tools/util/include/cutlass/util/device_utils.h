@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /***************************************************************************************************
  * Copyright (c) 2017 - 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
@@ -35,7 +36,7 @@
 
 #pragma once
 
-#include <cuda_fp16.h>
+#include <hip/hip_fp16.h>
 #include <float.h>
 #define FINAL_MASK 0xffffffff
 

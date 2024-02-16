@@ -55,10 +55,10 @@ private:
   Provider provider_;
 
   /// CUDA device properties
-  cudaDeviceProp device_;
+  hipDeviceProp_t device_;
 
   /// CUDA stream
-  cudaStream_t stream_;
+  hipStream_t stream_;
 
   /// Device workspace
   void *workspace_;
@@ -75,7 +75,7 @@ private:
 public:
 
   /// Constructor
-  Handle(cudaStream_t stream = nullptr, size_t workspace_size = (4<<20));
+  Handle(hipStream_t stream = nullptr, size_t workspace_size = (4<<20));
 
   /// Destructor
   ~Handle();
@@ -94,10 +94,10 @@ public:
   int compute_capability() const;
 
   /// Sets the current CUDA stream
-  void set_stream(cudaStream_t stream);
+  void set_stream(hipStream_t stream);
 
   /// Gets the current CUDA stream
-  cudaStream_t get_stream() const;
+  hipStream_t get_stream() const;
 
   /// Gets the current provider
   Provider get_provider() const;

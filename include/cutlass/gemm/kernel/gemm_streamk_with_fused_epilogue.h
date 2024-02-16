@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /***************************************************************************************************
  * Copyright (c) 2017 - 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
@@ -391,7 +392,7 @@ struct GemmStreamkWithFusedEpilogue<Mma_, Epilogue_, ThreadblockSwizzle_, false>
     /// the memory allocated to workspace is at least as large as get_workspace_size().
     Status init_workspace(
       void *workspace,
-      cudaStream_t stream = nullptr)
+      hipStream_t stream = nullptr)
     {
       uint8_t *ptr = static_cast<uint8_t*>(workspace);
 
@@ -426,14 +427,14 @@ struct GemmStreamkWithFusedEpilogue<Mma_, Epilogue_, ThreadblockSwizzle_, false>
 
         CUTLASS_TRACE_HOST("  Initialize " << barrier_workspace_bytes << " barrier bytes");
 
-        cudaError_t result = cudaMemsetAsync(
+        hipError_t result = hipMemsetAsync(
           barrier_workspace,
           0,
           barrier_workspace_bytes,
           stream);
 
-        if (result != cudaSuccess) {
-          CUTLASS_TRACE_HOST("  cudaMemsetAsync() returned error " << cudaGetErrorString(result));
+        if (result != hipSuccess) {
+          CUTLASS_TRACE_HOST("  hipMemsetAsync() returned error " << hipGetErrorString(result));
           return Status::kErrorInternal;
         }
       }
@@ -1561,7 +1562,7 @@ struct GemmStreamkWithFusedEpilogue<Mma_, Epilogue_, ThreadblockSwizzle_, true> 
     /// the memory allocated to workspace is at least as large as get_workspace_size().
     Status init_workspace(
       void *workspace,
-      cudaStream_t stream = nullptr)
+      hipStream_t stream = nullptr)
     {
       uint8_t *ptr = static_cast<uint8_t*>(workspace);
 
@@ -1596,14 +1597,14 @@ struct GemmStreamkWithFusedEpilogue<Mma_, Epilogue_, ThreadblockSwizzle_, true> 
 
         CUTLASS_TRACE_HOST("  Initialize " << barrier_workspace_bytes << " barrier bytes");
 
-        cudaError_t result = cudaMemsetAsync(
+        hipError_t result = hipMemsetAsync(
           barrier_workspace,
           0,
           barrier_workspace_bytes,
           stream);
 
-        if (result != cudaSuccess) {
-          CUTLASS_TRACE_HOST("  cudaMemsetAsync() returned error " << cudaGetErrorString(result));
+        if (result != hipSuccess) {
+          CUTLASS_TRACE_HOST("  hipMemsetAsync() returned error " << hipGetErrorString(result));
           return Status::kErrorInternal;
         }
       }

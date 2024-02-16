@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2017 - 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
@@ -52,7 +53,7 @@ void nhwc_padding(cutlass::Tensor4DCoord input_tensor_size,
                   cutlass::Tensor4DCoord output_tensor_size,
                   TensorRef<T, layout::TensorNHWC> ref_input,
                   TensorRef<T, layout::TensorNHWC> ref_output,
-                  cudaStream_t stream);
+                  hipStream_t stream);
 
 
 template <typename T>
@@ -167,7 +168,7 @@ void nhwc_padding(cutlass::Tensor4DCoord input_tensor_size,
                   cutlass::Tensor4DCoord output_tensor_size,
                   TensorRef<T, layout::TensorNHWC> ref_input,
                   TensorRef<T, layout::TensorNHWC> ref_output,
-                  cudaStream_t stream){
+                  hipStream_t stream){
   assert(
     input_tensor_size.n() == output_tensor_size.n() &&
     input_tensor_size.h() == output_tensor_size.h() &&
@@ -194,8 +195,8 @@ void nhwc_padding(cutlass::Tensor4DCoord input_tensor_size,
       const half_t zero_element = static_cast<half_t>(0.0f);
       dim3 grid((nhwc + 192*element_in_Tio - 1)/(192*element_in_Tio));
       if (c_out == 4){
-        nhwc_padding_channel_3To4_kernel<int4, half_t, element_in_Tio><<<grid, block, 0, stream>>>
-          (n, h, w,
+       hipLaunchKernelGGL(( nhwc_padding_channel_3To4_kernel<int4, half_t, element_in_Tio>), dim3(grid), dim3(block), 0, stream, 
+          n, h, w,
           (const int4 *)ref_input.data(),
           (int4 *)ref_output.data(),
           max_output_element,
@@ -204,8 +205,8 @@ void nhwc_padding(cutlass::Tensor4DCoord input_tensor_size,
           zero_element);
       }
       else if (c_out == 8){
-        nhwc_padding_channel_3To8_kernel<int4, half_t, element_in_Tio><<<grid, block, 0, stream>>>
-          (n, h, w,
+       hipLaunchKernelGGL(( nhwc_padding_channel_3To8_kernel<int4, half_t, element_in_Tio>), dim3(grid), dim3(block), 0, stream, 
+          n, h, w,
           (const int4 *)ref_input.data(),
           (int4 *)ref_output.data(),
           max_output_element,
@@ -223,8 +224,8 @@ void nhwc_padding(cutlass::Tensor4DCoord input_tensor_size,
       const float zero_element = 0.0f;
       dim3 grid((nhwc + 192*element_in_Tio - 1)/(192*element_in_Tio));
       if (c_out == 4){
-        nhwc_padding_channel_3To4_kernel<float4, float, element_in_Tio><<<grid, block, 0, stream>>>
-          (n, h, w,
+       hipLaunchKernelGGL(( nhwc_padding_channel_3To4_kernel<float4, float, element_in_Tio>), dim3(grid), dim3(block), 0, stream, 
+          n, h, w,
           (const float4 *)ref_input.data(),
           (float4 *)ref_output.data(),
           max_output_element,
@@ -233,8 +234,8 @@ void nhwc_padding(cutlass::Tensor4DCoord input_tensor_size,
           zero_element);
       }
       else if (c_out == 8){
-        nhwc_padding_channel_3To8_kernel<float4, float, element_in_Tio><<<grid, block, 0, stream>>>
-          (n, h, w,
+       hipLaunchKernelGGL(( nhwc_padding_channel_3To8_kernel<float4, float, element_in_Tio>), dim3(grid), dim3(block), 0, stream, 
+          n, h, w,
           (const float4 *)ref_input.data(),
           (float4 *)ref_output.data(),
           max_output_element,
@@ -253,12 +254,12 @@ void nhwc_padding(cutlass::Tensor4DCoord input_tensor_size,
     //for half_t
     if (cutlass::sizeof_bits<T>::value == 16){
       const __half2 zero  = {0.0f, 0.0f};
-      nhwc_padding_kernel<<<grid, block, 0, stream>>>(n, h, w, c_in/2, c_out/2, zero, (const __half2*)ref_input.data(), (__half2*)ref_output.data());
+     hipLaunchKernelGGL(( nhwc_padding_kernel), dim3(grid), dim3(block), 0, stream, n, h, w, c_in/2, c_out/2, zero, (const __half2*)ref_input.data(), (__half2*)ref_output.data());
     }
     //for float
     else{
       const float2 zero  = {0.0f, 0.0f};
-      nhwc_padding_kernel<<<grid, block, 0, stream>>>(n, h, w, c_in/2, c_out/2, zero, (const float2*)ref_input.data(), (float2*)ref_output.data());
+     hipLaunchKernelGGL(( nhwc_padding_kernel), dim3(grid), dim3(block), 0, stream, n, h, w, c_in/2, c_out/2, zero, (const float2*)ref_input.data(), (float2*)ref_output.data());
     }
   }
   //case 3 : odd channel
@@ -268,7 +269,7 @@ void nhwc_padding(cutlass::Tensor4DCoord input_tensor_size,
     dim3 grid((total_elements + 255)/256);
     dim3 block(block_size);
     const T zero = static_cast<T>(0.0f);
-    nhwc_padding_kernel<<<grid, block, 0, stream>>>(n, h, w, c_in, c_out, zero, ref_input.data(), ref_output.data());
+   hipLaunchKernelGGL(( nhwc_padding_kernel), dim3(grid), dim3(block), 0, stream, n, h, w, c_in, c_out, zero, ref_input.data(), ref_output.data());
   }
 }
 

@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2017 - 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
@@ -58,7 +59,7 @@ void pooling_nhwc(cutlass::Tensor4DCoord input_tensor_size,
                   TensorRef<T, layout::TensorNHWC> ref_input,
                   TensorRef<T, layout::TensorNHWC> ref_output,
                   int poolingType, //0 for avg pooling ; 1 for max pooling
-                  cudaStream_t stream);
+                  hipStream_t stream);
 
 /** get the output size of pooling
  */
@@ -356,7 +357,7 @@ void pooling_nhwc(cutlass::Tensor4DCoord input_tensor_size,
                   TensorRef<T, layout::TensorNHWC> ref_input,
                   TensorRef<T, layout::TensorNHWC> ref_output,
                   int poolingType, //0 for avg pooling ; 1 for max pooling
-                  cudaStream_t stream) {
+                  hipStream_t stream) {
 
   assert(input_tensor_size.n() == output_tensor_size.n() &&
          input_tensor_size.c() == output_tensor_size.c());
@@ -389,7 +390,7 @@ void pooling_nhwc(cutlass::Tensor4DCoord input_tensor_size,
         block.x = (H*W + 31)/32*32;
       } 
       if (poolingType == 0) {
-        pooling_nxhTo1x1_element1_kernel<T, true><<<grid, block, 0, stream>>>(
+       hipLaunchKernelGGL(( pooling_nxhTo1x1_element1_kernel<T, true>), dim3(grid), dim3(block), 0, stream, 
           ref_output.data(),
           ref_input.data(),
           N,
@@ -397,7 +398,7 @@ void pooling_nhwc(cutlass::Tensor4DCoord input_tensor_size,
           C);
       } // if (poolingType == 0)
       else {
-        pooling_nxhTo1x1_element1_kernel<T, false><<<grid, block, 0, stream>>>(
+       hipLaunchKernelGGL(( pooling_nxhTo1x1_element1_kernel<T, false>), dim3(grid), dim3(block), 0, stream, 
           ref_output.data(),
           ref_input.data(),
           N,
@@ -412,7 +413,7 @@ void pooling_nhwc(cutlass::Tensor4DCoord input_tensor_size,
         block.x = C;
       }
       if (poolingType == 0) {
-        pooling_nhwc_element1_kernel<T, true><<<grid, block, 0, stream>>>(
+       hipLaunchKernelGGL(( pooling_nhwc_element1_kernel<T, true>), dim3(grid), dim3(block), 0, stream, 
           ref_output.data(), 
           ref_input.data(),
           N,
@@ -429,7 +430,7 @@ void pooling_nhwc(cutlass::Tensor4DCoord input_tensor_size,
           padding_W);
       } // if (poolingType == 0)
       else {
-        pooling_nhwc_element1_kernel<T, false><<<grid, block, 0, stream>>>(
+       hipLaunchKernelGGL(( pooling_nhwc_element1_kernel<T, false>), dim3(grid), dim3(block), 0, stream, 
           ref_output.data(),
           ref_input.data(),
           N,
@@ -456,7 +457,7 @@ void pooling_nhwc(cutlass::Tensor4DCoord input_tensor_size,
       }
       if (poolingType == 0) {
         if (std::is_same<T, float>::value) {
-          pooling_nxhTo1x1_element2_kernel<float2, float, true><<<grid, block, 0, stream>>>(
+         hipLaunchKernelGGL(( pooling_nxhTo1x1_element2_kernel<float2, float, true>), dim3(grid), dim3(block), 0, stream, 
             (float2*)(ref_output.data()),
             (const float2*)(ref_input.data()),
             N,
@@ -464,7 +465,7 @@ void pooling_nhwc(cutlass::Tensor4DCoord input_tensor_size,
             C);
         } // if (std::is_same<T, float>::value)
         else {
-          pooling_nxhTo1x1_element2_kernel<half2, half, true><<<grid, block, 0, stream>>>(
+         hipLaunchKernelGGL(( pooling_nxhTo1x1_element2_kernel<half2, half, true>), dim3(grid), dim3(block), 0, stream, 
             (half2*)(ref_output.data()),
             (const half2*)(ref_input.data()),
             N,
@@ -474,7 +475,7 @@ void pooling_nhwc(cutlass::Tensor4DCoord input_tensor_size,
       } // if (poolingType == 0)
       else {
         if (std::is_same<T, float>::value) {
-          pooling_nxhTo1x1_element2_kernel<float2, float, false><<<grid, block, 0, stream>>>(
+         hipLaunchKernelGGL(( pooling_nxhTo1x1_element2_kernel<float2, float, false>), dim3(grid), dim3(block), 0, stream, 
             (float2*)(ref_output.data()),
             (const float2*)(ref_input.data()),
             N,
@@ -482,7 +483,7 @@ void pooling_nhwc(cutlass::Tensor4DCoord input_tensor_size,
             C);
         } // if (std::is_same<T, float>::value)
         else {
-          pooling_nxhTo1x1_element2_kernel<half2, half, false><<<grid, block, 0, stream>>>(
+         hipLaunchKernelGGL(( pooling_nxhTo1x1_element2_kernel<half2, half, false>), dim3(grid), dim3(block), 0, stream, 
             (half2*)(ref_output.data()),
             (const half2*)(ref_input.data()),
             N,
@@ -499,7 +500,7 @@ void pooling_nhwc(cutlass::Tensor4DCoord input_tensor_size,
       }
       if (poolingType == 0) {
         if (std::is_same<T, float>::value) {
-          pooling_nhwc_element2_kernel<float2, float, true><<<grid, block, 0, stream>>>(
+         hipLaunchKernelGGL(( pooling_nhwc_element2_kernel<float2, float, true>), dim3(grid), dim3(block), 0, stream, 
             (float2*)(ref_output.data()),
             (const float2*)(ref_input.data()),
             N,
@@ -516,7 +517,7 @@ void pooling_nhwc(cutlass::Tensor4DCoord input_tensor_size,
             padding_W);
         } // if (std::is_same<T, float>::value)
         else {
-          pooling_nhwc_element2_kernel<half2, half, true><<<grid, block, 0, stream>>>(
+         hipLaunchKernelGGL(( pooling_nhwc_element2_kernel<half2, half, true>), dim3(grid), dim3(block), 0, stream, 
             (half2*)(ref_output.data()),
             (const half2*)(ref_input.data()),
             N,
@@ -535,7 +536,7 @@ void pooling_nhwc(cutlass::Tensor4DCoord input_tensor_size,
       } // if (poolingType == 0)
       else {
         if (std::is_same<T, float>::value) {
-          pooling_nhwc_element2_kernel<float2, float, false><<<grid, block, 0, stream>>>(
+         hipLaunchKernelGGL(( pooling_nhwc_element2_kernel<float2, float, false>), dim3(grid), dim3(block), 0, stream, 
             (float2*)(ref_output.data()),
             (const float2*)(ref_input.data()),
             N,
@@ -552,7 +553,7 @@ void pooling_nhwc(cutlass::Tensor4DCoord input_tensor_size,
             padding_W);
         } // if (std::is_same<T, float>::value)
         else {
-          pooling_nhwc_element2_kernel<half2, half, false><<<grid, block, 0, stream>>>(
+         hipLaunchKernelGGL(( pooling_nhwc_element2_kernel<half2, half, false>), dim3(grid), dim3(block), 0, stream, 
             (half2*)(ref_output.data()),
             (const half2*)(ref_input.data()),
             N,

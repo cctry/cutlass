@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /***************************************************************************************************
  * Copyright (c) 2017 - 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
@@ -122,7 +123,7 @@ public:
   }
 
   /// Initializes Gemv state from arguments.
-  Status initialize(Arguments const &args, void *workspace = nullptr, cudaStream_t stream = nullptr) {
+  Status initialize(Arguments const &args, void *workspace = nullptr, hipStream_t stream = nullptr) {
     params_ = Params(args);
     return Status::kSuccess;
   }
@@ -133,7 +134,7 @@ public:
   }
 
   /// Runs the kernel using initialized state.
-  Status run(cudaStream_t stream = nullptr) {
+  Status run(hipStream_t stream = nullptr) {
 
     dim3 block = get_block_shape();
     dim3 grid = get_grid_shape(params_, block);
@@ -141,18 +142,18 @@ public:
     int smem_size = int(sizeof(typename GemvKernel::SharedStorage));
     
     // Launch
-    cutlass::Kernel<GemvKernel><<<grid, block, smem_size, stream>>>(params_);
+   hipLaunchKernelGGL(( cutlass::Kernel<GemvKernel>), dim3(grid), dim3(block), smem_size, stream, params_);
 
     //
     // Query for errors
     //
-    cudaError_t result = cudaGetLastError();
+    hipError_t result = hipGetLastError();
 
-    return result == cudaSuccess ? Status::kSuccess : Status::kErrorInternal;
+    return result == hipSuccess ? Status::kSuccess : Status::kErrorInternal;
   }
 
   /// Runs the kernel using initialized state.
-  Status operator()(cudaStream_t stream = nullptr) {
+  Status operator()(hipStream_t stream = nullptr) {
     return run(stream);
   }
 
@@ -160,7 +161,7 @@ public:
   Status operator()(
     Arguments const &args, 
     void *workspace = nullptr, 
-    cudaStream_t stream = nullptr) {
+    hipStream_t stream = nullptr) {
     
     Status status = initialize(args, workspace, stream);
     

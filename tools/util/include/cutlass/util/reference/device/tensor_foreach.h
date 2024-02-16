@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /***************************************************************************************************
  * Copyright (c) 2017 - 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
@@ -48,17 +49,17 @@ struct TensorForEach {
   TensorForEach(
     Coord<Rank> size, Params params = Params(),
     int grid_size = 0, int block_size = 0,
-    cudaStream_t stream = nullptr) {
+    hipStream_t stream = nullptr) {
 
     if (!grid_size || !block_size) {
 
       // if grid_size or block_size are zero, query occupancy using the CUDA Occupancy API
-      cudaError_t result = cudaOccupancyMaxPotentialBlockSize(
+      hipError_t result = hipOccupancyMaxPotentialBlockSize(
         &grid_size,
         &block_size,
         reinterpret_cast<void const *>(kernel::TensorForEach<Func, Rank, Params>));
 
-      if (result != cudaSuccess) {
+      if (result != hipSuccess) {
         throw std::runtime_error("Failed to query occupancy.");
       }
 
@@ -70,7 +71,7 @@ struct TensorForEach {
     dim3 grid(grid_size, 1, 1);
     dim3 block(block_size, 1, 1);
 
-    kernel::TensorForEach<Func, Rank, Params><<< grid, block, 0, stream >>>(size, params);
+   hipLaunchKernelGGL(( kernel::TensorForEach<Func, Rank, Params>),  dim3(grid), dim3(block), 0, stream , size, params);
   }
 };
 
@@ -84,7 +85,7 @@ struct TensorDiagonalForEach {
   TensorDiagonalForEach(
     Coord<Rank> size, Params params = Params(),
     int start = 0, int end = -1,
-    int block_size = 128, cudaStream_t stream = nullptr) {
+    int block_size = 128, hipStream_t stream = nullptr) {
 
     if (end < 0) {
       end = size.min();
@@ -93,7 +94,7 @@ struct TensorDiagonalForEach {
     dim3 block(block_size, 1, 1);
     dim3 grid((end - start + block_size - 1) / block_size, 1, 1);
 
-    kernel::TensorDiagonalForEach<Func, Rank, Params><<< grid, block, 0, stream >>>(
+   hipLaunchKernelGGL(( kernel::TensorDiagonalForEach<Func, Rank, Params>),  dim3(grid), dim3(block), 0, stream , 
       size, params, start, end);
   }
 };
@@ -111,17 +112,17 @@ struct BlockForEach {
     typename Func::Params params = typename Func::Params(),
     int grid_size = 0,
     int block_size = 0,
-    cudaStream_t stream = nullptr) {
+    hipStream_t stream = nullptr) {
 
     if (!grid_size || !block_size) {
 
       // if grid_size or block_size are zero, query occupancy using the CUDA Occupancy API
-      cudaError_t result = cudaOccupancyMaxPotentialBlockSize(
+      hipError_t result = hipOccupancyMaxPotentialBlockSize(
         &grid_size,
         &block_size,
         reinterpret_cast<void const *>(kernel::BlockForEach<Element, Func>));
 
-      if (result != cudaSuccess) {
+      if (result != hipSuccess) {
         throw std::runtime_error("Failed to query occupancy.");
       }
 
@@ -133,7 +134,7 @@ struct BlockForEach {
     dim3 grid(grid_size, 1, 1);
     dim3 block(block_size, 1, 1);
 
-    kernel::BlockForEach<Element, Func><<< grid, block, 0, stream >>>(ptr, capacity, params);
+   hipLaunchKernelGGL(( kernel::BlockForEach<Element, Func>),  dim3(grid), dim3(block), 0, stream , ptr, capacity, params);
   }
 };
 

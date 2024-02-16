@@ -45,8 +45,8 @@
 #pragma once
 
 #if !defined(__CUDACC_RTC__)
-#include "cuda.h"
-#include "cuda_runtime.h"
+#include "hip/hip_runtime.h"
+#include "hip/hip_runtime.h"
 
 #include "cutlass/trace.h"
 #endif
@@ -61,7 +61,7 @@ static constexpr int MinWorkspaceAlignment = 16;
 
 #if !defined(__CUDACC_RTC__)
 static Status
-zero_workspace(void* workspace, size_t workspace_size, cudaStream_t stream = nullptr) {
+zero_workspace(void* workspace, size_t workspace_size, hipStream_t stream = nullptr) {
   if (workspace_size > 0) {
     if (workspace == nullptr) {
       CUTLASS_TRACE_HOST("  error: device workspace must not be null");
@@ -69,10 +69,10 @@ zero_workspace(void* workspace, size_t workspace_size, cudaStream_t stream = nul
     }
 
     CUTLASS_TRACE_HOST("  clearing workspace");
-    cudaError_t result = cudaMemsetAsync(workspace, 0, workspace_size, stream);
-    if (cudaSuccess != result) {
-      result = cudaGetLastError(); // to clear the error bit
-      CUTLASS_TRACE_HOST("  cudaMemsetAsync() returned error " << cudaGetErrorString(result));
+    hipError_t result = hipMemsetAsync(workspace, 0, workspace_size, stream);
+    if (hipSuccess != result) {
+      result = hipGetLastError(); // to clear the error bit
+      CUTLASS_TRACE_HOST("  hipMemsetAsync() returned error " << hipGetErrorString(result));
       return Status::kErrorInternal;
     }
   }
@@ -84,7 +84,11 @@ zero_workspace(void* workspace, size_t workspace_size, cudaStream_t stream = nul
 #if !defined(__CUDACC_RTC__)
 template <typename T>
 Status
+<<<<<<< HEAD
 fill_workspace(void* workspace, T fill_value, size_t fill_count, cudaStream_t stream = nullptr, CudaHostAdapter *cuda_adapter = nullptr) {
+=======
+fill_workspace(void* workspace, T fill_value, size_t fill_count, hipStream_t stream = nullptr) {
+>>>>>>> dfa93ce8 (hipify other headers)
   static_assert(sizeof(T) == 4 || sizeof(T) == 2 || sizeof(T) == 1, "Unsupported fill type");
   if (fill_count > 0) {
     if (workspace == nullptr) {
@@ -93,6 +97,7 @@ fill_workspace(void* workspace, T fill_value, size_t fill_count, cudaStream_t st
     }
 
     CUTLASS_TRACE_HOST("  filling workspace");
+<<<<<<< HEAD
     CUdeviceptr d_workspace = reinterpret_cast<CUdeviceptr>(workspace);
 
 #if defined(CUTLASS_ENABLE_CUDA_HOST_ADAPTER) && CUTLASS_ENABLE_CUDA_HOST_ADAPTER
@@ -115,19 +120,23 @@ fill_workspace(void* workspace, T fill_value, size_t fill_count, cudaStream_t st
     }
 #else
     CUresult result = CUDA_SUCCESS;
+=======
+    hipDeviceptr_t d_workspace = reinterpret_cast<hipDeviceptr_t>(workspace);
+    hipError_t result = hipSuccess;
+>>>>>>> dfa93ce8 (hipify other headers)
     if (sizeof(T) == 4) {
-      result = cuMemsetD32Async(d_workspace, reinterpret_cast<uint32_t&>(fill_value), fill_count, stream);
+      result = hipMemsetAsync(d_workspace, reinterpret_cast<uint32_t&>(fill_value), fill_count, stream);
     }
     else if (sizeof(T) == 2) {
-      result = cuMemsetD16Async(d_workspace, reinterpret_cast<uint16_t&>(fill_value), fill_count, stream);
+      result = hipMemsetD16Async(d_workspace, reinterpret_cast<uint16_t&>(fill_value), fill_count, stream);
     }
     else if (sizeof(T) == 1) {
-      result = cuMemsetD8Async(d_workspace, reinterpret_cast<uint8_t&>(fill_value), fill_count, stream);
+      result = hipMemsetD8Async(d_workspace, reinterpret_cast<uint8_t&>(fill_value), fill_count, stream);
     }
 
-    if (CUDA_SUCCESS != result) {
+    if (hipSuccess != result) {
       const char** error_string_ptr = nullptr;
-      (void) cuGetErrorString(result, error_string_ptr);
+      (void) hipGetErrorString(result, error_string_ptr);
       if (error_string_ptr != nullptr) {
         CUTLASS_TRACE_HOST("  cuMemsetD" << sizeof(T) * 8 << "Async() returned error " << *error_string_ptr);
       }

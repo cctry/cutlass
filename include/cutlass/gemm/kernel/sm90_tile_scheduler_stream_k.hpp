@@ -579,7 +579,7 @@ public:
   initialize_workspace(
     Arguments const& args,
     void* workspace,
-    cudaStream_t stream,
+    hipStream_t stream,
     ProblemShape const& problem_shape,
     KernelHardwareInfo const& hw_info,
     uint32_t mma_warp_groups,

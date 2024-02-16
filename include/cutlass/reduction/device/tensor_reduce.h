@@ -173,7 +173,7 @@ struct TensorReduction {
     void *device_workspace_ptr = nullptr,
     ElementCompute reduction_identity = ElementCompute(),
     ReductionOp reduction_op = ReductionOp(),
-    cudaStream_t stream = nullptr) {
+    hipStream_t stream = nullptr) {
 
     int64_t src_stride[3];
     int64_t dst_stride[3];
@@ -242,7 +242,7 @@ struct TensorReduction {
     void *device_workspace_ptr = nullptr,
     ElementCompute reduction_identity = ElementCompute(),
     ReductionOp reduction_op = ReductionOp(),
-    cudaStream_t stream = nullptr) {
+    hipStream_t stream = nullptr) {
 
     return reduce(
       dst_ref, 

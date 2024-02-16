@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /***************************************************************************************************
  * Copyright (c) 2017 - 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
@@ -169,7 +170,7 @@ public:
   Status initialize(
     Arguments const &args, 
     void *workspace = nullptr, 
-    cudaStream_t stream = nullptr) {
+    hipStream_t stream = nullptr) {
    
     if (args.problem_size.split_k_slices > 1) {
 
@@ -177,9 +178,9 @@ public:
         return Status::kErrorWorkspaceNull;
       }
 
-      cudaError_t status = cudaMemsetAsync(workspace, 0, get_workspace_size(args), stream);
+      hipError_t status = hipMemsetAsync(workspace, 0, get_workspace_size(args), stream);
 
-      if (status != cudaSuccess) {
+      if (status != hipSuccess) {
         return Status::kErrorInternal;
       }
     }
@@ -193,11 +194,11 @@ public:
     int smem_size = int(sizeof(typename ImplicitGemmFusionKernel::SharedStorage));
 
     if (smem_size >= (48 << 10)) {
-      cudaError_t result = cudaFuncSetAttribute(cutlass::Kernel<ImplicitGemmFusionKernel>,
-                                    cudaFuncAttributeMaxDynamicSharedMemorySize,
+      hipError_t result = hipFuncSetAttribute(cutlass::Kernel<ImplicitGemmFusionKernel>,
+                                    hipFuncAttributeMaxDynamicSharedMemorySize,
                                     smem_size);
 
-      if (result != cudaSuccess) {
+      if (result != hipSuccess) {
         return Status::kErrorInternal;
       }
     }
@@ -222,7 +223,7 @@ public:
   }
 
   /// Runs the kernel using initialized state.
-  Status run(cudaStream_t stream = nullptr) {
+  Status run(hipStream_t stream = nullptr) {
 
     ThreadblockSwizzle threadblock_swizzle;
 
@@ -231,15 +232,15 @@ public:
 
     int smem_size = int(sizeof(typename ImplicitGemmFusionKernel::SharedStorage));
 
-    cutlass::Kernel<ImplicitGemmFusionKernel><<<grid, block, smem_size, stream>>>(params_);
+   hipLaunchKernelGGL(( cutlass::Kernel<ImplicitGemmFusionKernel>), dim3(grid), dim3(block), smem_size, stream, params_);
 
-    cudaError_t result = cudaGetLastError();
+    hipError_t result = hipGetLastError();
 
-    return result == cudaSuccess ? Status::kSuccess : Status::kErrorInternal;
+    return result == hipSuccess ? Status::kSuccess : Status::kErrorInternal;
   }
 
   /// Runs the kernel using initialized state.
-  Status operator()(cudaStream_t stream = nullptr) {
+  Status operator()(hipStream_t stream = nullptr) {
     return run(stream);
   }
 
@@ -247,7 +248,7 @@ public:
   Status operator()(
     Arguments const &args, 
     void *workspace = nullptr, 
-    cudaStream_t stream = nullptr) {
+    hipStream_t stream = nullptr) {
     
     Status status = initialize(args, workspace, stream);
     

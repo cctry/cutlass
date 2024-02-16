@@ -132,8 +132,12 @@ struct Sm90AuxStore {
 
   template <class ProblemShape>
   static cutlass::Status
+<<<<<<< HEAD
   initialize_workspace(ProblemShape const& problem_shape, Arguments const& args, void* workspace, cudaStream_t stream,
     CudaHostAdapter* cuda_adapter = nullptr) {
+=======
+  initialize_workspace(ProblemShape const& problem_shape, Arguments const& args, void* workspace, hipStream_t stream) {
+>>>>>>> dfa93ce8 (hipify other headers)
     return cutlass::Status::kSuccess;
   }
 
@@ -330,8 +334,12 @@ public:
 
   template <class ProblemShape>
   static cutlass::Status
+<<<<<<< HEAD
   initialize_workspace(ProblemShape const& problem_shape, Arguments const& args, void* workspace, cudaStream_t stream,
     CudaHostAdapter* cuda_adapter = nullptr) {
+=======
+  initialize_workspace(ProblemShape const& problem_shape, Arguments const& args, void* workspace, hipStream_t stream) {
+>>>>>>> dfa93ce8 (hipify other headers)
     if constexpr (IsAtomic) {
       auto [M, N, K, L] = problem_shape;
       Layout mScalar_layout = make_layout(make_shape(M,N,L), args.dScalar);
@@ -547,8 +555,12 @@ public:
 
   template <class ProblemShape>
   static cutlass::Status
+<<<<<<< HEAD
   initialize_workspace(ProblemShape const& problem_shape, Arguments const& args, void* workspace, cudaStream_t stream,
     CudaHostAdapter* cuda_adapter = nullptr) {
+=======
+  initialize_workspace(ProblemShape const& problem_shape, Arguments const& args, void* workspace, hipStream_t stream) {
+>>>>>>> dfa93ce8 (hipify other headers)
     if constexpr (IsAtomic) {
       auto [M, N, K, L] = problem_shape;
       Layout mRow_layout = make_layout(make_shape(M,N,L), args.dRow);
@@ -1015,8 +1027,12 @@ public:
 
   template <class ProblemShape>
   static cutlass::Status
+<<<<<<< HEAD
   initialize_workspace(ProblemShape const& problem_shape, Arguments const& args, void* workspace, cudaStream_t stream,
     CudaHostAdapter* cuda_adapter = nullptr) {
+=======
+  initialize_workspace(ProblemShape const& problem_shape, Arguments const& args, void* workspace, hipStream_t stream) {
+>>>>>>> dfa93ce8 (hipify other headers)
     if constexpr (IsAtomic) {
       auto [M, N, K, L] = problem_shape;
       Layout mCol_layout = make_layout(make_shape(M,N,L), args.dCol);

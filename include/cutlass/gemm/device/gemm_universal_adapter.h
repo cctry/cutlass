@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /***************************************************************************************************
  * Copyright (c) 2017 - 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
@@ -237,34 +238,34 @@ public:
     int smem_size = GemmKernel::SharedStorageSize;
 
     // first, account for dynamic smem capacity if needed
-    cudaError_t result;
+    hipError_t result;
     if (smem_size >= (48 << 10)) {
       CUTLASS_TRACE_HOST("  Setting smem size to " << smem_size);
-      result = cudaFuncSetAttribute(
+      result = hipFuncSetAttribute(
           device_kernel<GemmKernel>,
-          cudaFuncAttributeMaxDynamicSharedMemorySize,
+          hipFuncAttributeMaxDynamicSharedMemorySize,
           smem_size);
-      if (cudaSuccess != result) {
-        result = cudaGetLastError(); // to clear the error bit
+      if (hipSuccess != result) {
+        result = hipGetLastError(); // to clear the error bit
         CUTLASS_TRACE_HOST(
-          "  cudaFuncSetAttribute() returned error: "
-          << cudaGetErrorString(result));
+          "  hipFuncSetAttribute() returned error: "
+          << hipGetErrorString(result));
         return -1;
       }
     }
 
     // query occupancy after setting smem size
-    result = cudaOccupancyMaxActiveBlocksPerMultiprocessor(
+    result = hipOccupancyMaxActiveBlocksPerMultiprocessor(
         &max_active_blocks,
         device_kernel<GemmKernel>,
         GemmKernel::MaxThreadsPerBlock,
         smem_size);
 
-    if (cudaSuccess != result) {
-      result = cudaGetLastError(); // to clear the error bit
+    if (hipSuccess != result) {
+      result = hipGetLastError(); // to clear the error bit
       CUTLASS_TRACE_HOST(
-        "  cudaOccupancyMaxActiveBlocksPerMultiprocessor() returned error: "
-        << cudaGetErrorString(result));
+        "  hipOccupancyMaxActiveBlocksPerMultiprocessor() returned error: "
+        << hipGetErrorString(result));
       return -1;
     }
 
@@ -277,8 +278,13 @@ public:
   initialize(
     Arguments const& args,
     void* workspace = nullptr,
+<<<<<<< HEAD
     cudaStream_t stream = nullptr,
     CudaHostAdapter* cuda_adapter = nullptr) {
+=======
+    hipStream_t stream = nullptr,
+    CudaHostAdapter *cuda_adapter = nullptr) {
+>>>>>>> dfa93ce8 (hipify other headers)
 
     CUTLASS_TRACE_HOST("GemmUniversal::initialize() - workspace "
       << workspace << ", stream: " << (stream ? "non-null" : "null"));
@@ -305,13 +311,13 @@ public:
 
       if (smem_size >= (48 << 10)) {
         CUTLASS_TRACE_HOST("  Setting smem size to " << smem_size);
-        cudaError_t result = cudaFuncSetAttribute(
+        hipError_t result = hipFuncSetAttribute(
             device_kernel<GemmKernel>,
-            cudaFuncAttributeMaxDynamicSharedMemorySize,
+            hipFuncAttributeMaxDynamicSharedMemorySize,
             smem_size);
-        if (cudaSuccess != result) {
-          result = cudaGetLastError(); // to clear the error bit
-          CUTLASS_TRACE_HOST("  cudaFuncSetAttribute() returned error: " << cudaGetErrorString(result));
+        if (hipSuccess != result) {
+          result = hipGetLastError(); // to clear the error bit
+          CUTLASS_TRACE_HOST("  hipFuncSetAttribute() returned error: " << hipGetErrorString(result));
           return Status::kErrorInternal;
         }
       }
@@ -337,7 +343,7 @@ public:
   /// Supplied params struct must be construct by calling GemmKernel::to_underling_arguments()
   static Status
   run(Params& params,
-      cudaStream_t stream = nullptr,
+      hipStream_t stream = nullptr,
       CudaHostAdapter *cuda_adapter = nullptr) {
     CUTLASS_TRACE_HOST("GemmUniversal::run()");
     dim3 const block = GemmKernel::get_block_shape();
@@ -396,12 +402,12 @@ public:
       }
       else {
         CUTLASS_ASSERT(cuda_adapter == nullptr);
-        device_kernel<GemmKernel><<<grid, block, smem_size, stream>>>(params);
+       hipLaunchKernelGGL(( device_kernel<GemmKernel>), dim3(grid), dim3(block), smem_size, stream, params);
       }
     }
 
-    cudaError_t result = cudaGetLastError();
-    if (cudaSuccess == result && Status::kSuccess == launch_result) {
+    hipError_t result = hipGetLastError();
+    if (hipSuccess == result && Status::kSuccess == launch_result) {
       return Status::kSuccess;
     }
     else {
@@ -419,7 +425,7 @@ public:
   run(
     Arguments const& args,
     void* workspace = nullptr,
-    cudaStream_t stream = nullptr,
+    hipStream_t stream = nullptr,
     CudaHostAdapter *cuda_adapter = nullptr
   ) {
     Status status = initialize(args, workspace, stream, cuda_adapter);
@@ -435,20 +441,20 @@ public:
   operator()(
     Arguments const& args,
     void* workspace = nullptr,
-    cudaStream_t stream = nullptr,
+    hipStream_t stream = nullptr,
     CudaHostAdapter *cuda_adapter = nullptr) {
     return run(args, workspace, stream, cuda_adapter);
   }
 
   /// Overload that allows a user to re-launch the same kernel without updating internal params struct.
   Status
-  run(cudaStream_t stream = nullptr, CudaHostAdapter *cuda_adapter = nullptr) {
+  run(hipStream_t stream = nullptr, CudaHostAdapter *cuda_adapter = nullptr) {
     return run(params_, stream, cuda_adapter);
   }
 
   /// Overload that allows a user to re-launch the same kernel without updating internal params struct.
   Status
-  operator()(cudaStream_t stream = nullptr, CudaHostAdapter *cuda_adapter = nullptr) {
+  operator()(hipStream_t stream = nullptr, CudaHostAdapter *cuda_adapter = nullptr) {
     return run(params_, stream, cuda_adapter);
   }
 };
@@ -574,7 +580,7 @@ public:
   Status initialize(
     Arguments const &args,
     void *workspace = nullptr,
-    cudaStream_t stream = nullptr,
+    hipStream_t stream = nullptr,
     CudaHostAdapter *cuda_adapter = nullptr
   ) {
 
@@ -589,7 +595,7 @@ public:
 
   /// Runs the kernel using initialized state.
   Status run(
-    cudaStream_t stream = nullptr,
+    hipStream_t stream = nullptr,
     CudaHostAdapter *cuda_adapter = nullptr) {
 
     return underlying_operator_.run(stream, cuda_adapter);
@@ -597,7 +603,11 @@ public:
 
   /// Runs the kernel using initialized state.
   Status operator()(
+<<<<<<< HEAD
     cudaStream_t stream = nullptr,
+=======
+    hipStream_t stream = nullptr, 
+>>>>>>> dfa93ce8 (hipify other headers)
     CudaHostAdapter *cuda_adapter = nullptr) {
 
     return run(stream);
@@ -607,7 +617,7 @@ public:
   Status operator()(
     Arguments const &args,
     void *workspace = nullptr,
-    cudaStream_t stream = nullptr,
+    hipStream_t stream = nullptr,
     CudaHostAdapter *cuda_adapter = nullptr) {
 
     Status status = initialize(args, workspace, stream, cuda_adapter);

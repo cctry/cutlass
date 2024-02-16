@@ -916,7 +916,7 @@ make_tma_copy_desc(Tensor<GEngine,GLayout> const& gtensor,         // The origin
 
     // TMA smem swizzle type
     CUtensorMapSwizzle smem_swizzle = TMA::to_CUtensorMapSwizzle(get_tma_swizzle_bits(swizzle));
-    CUresult result = cuTensorMapEncodeTiled(
+    hipError_t result = cuTensorMapEncodeTiled(
         &tma_desc,
         tma_format,
         tma_dim,
@@ -930,7 +930,7 @@ make_tma_copy_desc(Tensor<GEngine,GLayout> const& gtensor,         // The origin
         tma_l2Promotion,
         tma_oobFill);
 
-    if (result != CUDA_SUCCESS) {
+    if (result != hipSuccess) {
       std::cerr << "TMA Desc Addr:   " << &tma_desc
                 << "\nformat         " << tma_format
                 << "\ndim            " << tma_dim

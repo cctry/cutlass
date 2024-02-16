@@ -110,7 +110,7 @@ struct ConvReferenceDispatcher<
     ElementC *ptr_D,
     ElementCompute alpha,
     ElementCompute beta,
-    cudaStream_t stream = nullptr
+    hipStream_t stream = nullptr
   ) {
 
     Conv2dConfiguration const &config = 
@@ -226,7 +226,7 @@ struct ConvReferenceDispatcher<
     ElementC *ptr_D,
     ElementCompute alpha,
     ElementCompute beta,
-    cudaStream_t stream = nullptr
+    hipStream_t stream = nullptr
   ) {
 
     Conv3dConfiguration const &config = 
@@ -421,7 +421,7 @@ public:
     void const *configuration,
     void *host_workspace,
     void *device_workspace = nullptr,
-    cudaStream_t stream = nullptr) const {
+    hipStream_t stream = nullptr) const {
 
     std::memcpy(host_workspace, configuration, get_host_workspace_size(configuration));
 
@@ -432,7 +432,7 @@ public:
     void const *arguments,
     void *host_workspace,
     void *device_workspace = nullptr,
-    cudaStream_t stream = nullptr) const {
+    hipStream_t stream = nullptr) const {
 
     ConvArguments const  &args = *static_cast<ConvArguments const *>(arguments);
 

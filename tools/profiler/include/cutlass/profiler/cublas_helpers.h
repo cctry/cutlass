@@ -35,7 +35,7 @@
 #pragma once
 
 #if CUTLASS_ENABLE_CUBLAS
-#include <cublas_v2.h>
+#include <hipblas/hipblas.h>
 
 #include "cutlass/cutlass.h"
 #include "cutlass/library/library.h"
@@ -52,22 +52,22 @@ namespace profiler {
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Converts a cuBLAS status to cutlass::Status
-Status get_cutlass_status(cublasStatus_t cublas);
+Status get_cutlass_status(hipblasStatus_t cublas);
 
 /// Converts a cuBLAS status to cutlass::profiler::Disposition
-Disposition get_cutlass_disposition(cublasStatus_t cublas_status);
+Disposition get_cutlass_disposition(hipblasStatus_t cublas_status);
 
 /// Maps a CUTLASS tensor layout to a cuBLAS transpose operation
 bool get_cublas_transpose_operation(
-  cublasOperation_t &operation,
+  hipblasOperation_t &operation,
   library::LayoutTypeID layout,
   library::ComplexTransform transform = library::ComplexTransform::kNone);
 
 /// Maps a CUTLASS numeric type to a cuBLAS data type enumeration
-bool get_cublas_datatype(cublasDataType_t &data_type, library::NumericTypeID element_type);
+bool get_cublas_datatype(hipDataType &data_type, library::NumericTypeID element_type);
 
 /// Gets the cublas algorithm given threadblock tile dimensions and math opcode class
-cublasGemmAlgo_t get_cublas_gemm_algo(
+hipblasGemmAlgo_t get_cublas_gemm_algo(
   int cta_m, 
   int cta_n, 
   int cta_k, 
@@ -85,28 +85,28 @@ Status cublas_satisfies(library::TrmmDescription const &desc);
 /// Returns a status if cuBLAS can satisfy a particular SYMM/HEMM description
 Status cublas_satisfies(library::SymmDescription const &desc);
 
-/// This is a helper class to create cublasHandle_t automatically on CublasCreate object creation and 
-/// to destroy cublasHandle_t on CublasCreate object destruction. 
-/// Additionally, it provides implicit cast from CublasCreate's object to cublasHandle_t's object
+/// This is a helper class to create hipblasHandle_t automatically on CublasCreate object creation and 
+/// to destroy hipblasHandle_t on CublasCreate object destruction. 
+/// Additionally, it provides implicit cast from CublasCreate's object to hipblasHandle_t's object
 class CublasCreate {
 private:
-	cublasHandle_t handle;
-	cublasStatus_t status;
+	hipblasHandle_t handle;
+	hipblasStatus_t status;
 
 public:
 	CublasCreate() {
-		status = cublasCreate(&handle);
+		status = hipblasCreate(&handle);
 	}
 
 	~CublasCreate() {
-		cublasDestroy(handle);
+		hipblasDestroy(handle);
 	}
 
-    /// Implicit cast CublasCreate object to cublasHandle_t
-    operator cublasHandle_t() const { return handle; }
+    /// Implicit cast CublasCreate object to hipblasHandle_t
+    operator hipblasHandle_t() const { return handle; }
 
-    /// returns cublasStatus_t for handle creation
-    cublasStatus_t get_cublas_create_status() { return status; }
+    /// returns hipblasStatus_t for handle creation
+    hipblasStatus_t get_cublas_create_status() { return status; }
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -115,7 +115,7 @@ namespace detail {
 
 /// Selects one or more cuBLAS algorithms.
 static void select_cublas_algorithms(
-  std::vector<cublasGemmAlgo_t> &algorithms,
+  std::vector<hipblasGemmAlgo_t> &algorithms,
   Options const &options, 
   library::GemmDescription const &op_desc) {
 
@@ -142,11 +142,11 @@ static void select_cublas_algorithms(
         // Enumerate all algorithms
         if (opcode_class == library::OpcodeClassID::kSimt) {
           
-          for (int algo = CUBLAS_GEMM_DEFAULT; 
+          for (int algo = HIPBLAS_GEMM_DEFAULT; 
             algo <= CUBLAS_GEMM_ALGO23; 
             ++algo) {
 
-            algorithms.push_back(cublasGemmAlgo_t(algo));
+            algorithms.push_back(hipblasGemmAlgo_t(algo));
           }
         }
         else {
@@ -155,7 +155,7 @@ static void select_cublas_algorithms(
             algo <= CUBLAS_GEMM_ALGO15_TENSOR_OP; 
             ++algo) {
 
-            algorithms.push_back(cublasGemmAlgo_t(algo));
+            algorithms.push_back(hipblasGemmAlgo_t(algo));
           }
         }
       }
@@ -164,7 +164,7 @@ static void select_cublas_algorithms(
         algorithms.reserve(options.library.algorithms.size());
 
         for (int algo : options.library.algorithms) {
-          algorithms.push_back(reinterpret_cast<cublasGemmAlgo_t const &>(algo));
+          algorithms.push_back(reinterpret_cast<hipblasGemmAlgo_t const &>(algo));
         }
       }
 
@@ -176,7 +176,7 @@ static void select_cublas_algorithms(
 
       // Use the library's default algorithm
       algorithms.push_back((opcode_class == library::OpcodeClassID::kSimt ? 
-        CUBLAS_GEMM_DEFAULT : CUBLAS_GEMM_DEFAULT_TENSOR_OP)); 
+        HIPBLAS_GEMM_DEFAULT : CUBLAS_GEMM_DEFAULT_TENSOR_OP)); 
 
       break;
     }
@@ -187,7 +187,7 @@ static void select_cublas_algorithms(
   }
 }
 
-/// Dispatcher to cublasGemmEx() 
+/// Dispatcher to hipblasGemmEx() 
 struct cublasGemmExDispatcher {
 
   //
@@ -197,18 +197,18 @@ struct cublasGemmExDispatcher {
   library::GemmUniversalArguments arguments;
 
   // cublas-specific data structures to fill cublas API call arguments
-  cublasOperation_t trans_A;
-  cublasOperation_t trans_B;
-  cudaDataType_t data_type_A;
-  cudaDataType_t data_type_B;
-  cudaDataType_t data_type_C;
-  cudaDataType_t compute_data_type;
+  hipblasOperation_t trans_A;
+  hipblasOperation_t trans_B;
+  hipDataType data_type_A;
+  hipDataType data_type_B;
+  hipDataType data_type_C;
+  hipDataType compute_data_type;
 
 #if (__CUDACC_VER_MAJOR__ >= 11)
-  cublasComputeType_t compute_type;
+  hipblasComputeType_t compute_type;
 #endif
 
-  cublasGemmAlgo_t algo;
+  hipblasGemmAlgo_t algo;
   Status status;
   
   //
@@ -219,11 +219,11 @@ struct cublasGemmExDispatcher {
     library::GemmDescription const &op_desc,
     library::GemmUniversalConfiguration configuration_,
     library::GemmUniversalArguments arguments_,
-    cublasGemmAlgo_t algorithm = CUBLAS_GEMM_DFALT
+    hipblasGemmAlgo_t algorithm = CUBLAS_GEMM_DFALT
   );
 
   /// Executes GEMM using these arguments
-  cublasStatus_t operator()(cublasHandle_t handle);
+  hipblasStatus_t operator()(hipblasHandle_t handle);
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -238,14 +238,14 @@ struct cublasRankKDispatcher {
   library::RankKArguments arguments;
 
   // cublas-specific data structures to fill cublas API call arguments
-  cublasOperation_t trans_A;
-  cublasFillMode_t uplo;
-  cudaDataType_t data_type_A;
-  cudaDataType_t data_type_C;
-  cudaDataType_t compute_data_type;
+  hipblasOperation_t trans_A;
+  hipblasFillMode_t uplo;
+  hipDataType data_type_A;
+  hipDataType data_type_C;
+  hipDataType compute_data_type;
 
 #if (__CUDACC_VER_MAJOR__ >= 11)
-  cublasComputeType_t compute_type;
+  hipblasComputeType_t compute_type;
 #endif
 
   int num_ranks;       //(rank-k or rank-2k)
@@ -263,7 +263,7 @@ struct cublasRankKDispatcher {
   );
 
   /// Executes RankK using these arguments
-  cublasStatus_t operator()(cublasHandle_t handle);
+  hipblasStatus_t operator()(hipblasHandle_t handle);
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -278,17 +278,17 @@ struct cublasTrmmDispatcher {
   library::TrmmArguments arguments;
 
   // cublas-specific data structures to fill cublas API call arguments
-  cublasOperation_t trans_A;
-  cublasSideMode_t side;
-  cublasFillMode_t uplo;
-  cublasDiagType_t diag;
-  cudaDataType_t data_type_A;
-  cudaDataType_t data_type_B;
-  cudaDataType_t data_type_D;
-  cudaDataType_t compute_data_type;
+  hipblasOperation_t trans_A;
+  hipblasSideMode_t side;
+  hipblasFillMode_t uplo;
+  hipblasDiagType_t diag;
+  hipDataType data_type_A;
+  hipDataType data_type_B;
+  hipDataType data_type_D;
+  hipDataType compute_data_type;
 
 #if (__CUDACC_VER_MAJOR__ >= 11)
-  cublasComputeType_t compute_type;
+  hipblasComputeType_t compute_type;
 #endif
 
   Status status;
@@ -304,7 +304,7 @@ struct cublasTrmmDispatcher {
   );
 
   /// Executes TRMM using these arguments
-  cublasStatus_t operator()(cublasHandle_t handle);
+  hipblasStatus_t operator()(hipblasHandle_t handle);
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -319,15 +319,15 @@ struct cublasSymmDispatcher {
   library::SymmArguments arguments;
 
   // cublas-specific data structures to fill cublas API call arguments
-  cublasSideMode_t side;
-  cublasFillMode_t uplo;
-  cudaDataType_t data_type_A;
-  cudaDataType_t data_type_B;
-  cudaDataType_t data_type_C;
-  cudaDataType_t compute_data_type;
+  hipblasSideMode_t side;
+  hipblasFillMode_t uplo;
+  hipDataType data_type_A;
+  hipDataType data_type_B;
+  hipDataType data_type_C;
+  hipDataType compute_data_type;
 
 #if (__CUDACC_VER_MAJOR__ >= 11)
-  cublasComputeType_t compute_type;
+  hipblasComputeType_t compute_type;
 #endif
   
   BlasMode blas_mode; //(symmetric or hermitian)
@@ -344,7 +344,7 @@ struct cublasSymmDispatcher {
   );
 
   /// Executes Symm using these arguments
-  cublasStatus_t operator()(cublasHandle_t handle);
+  hipblasStatus_t operator()(hipblasHandle_t handle);
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

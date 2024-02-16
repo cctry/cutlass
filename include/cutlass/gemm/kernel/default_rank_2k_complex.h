@@ -138,7 +138,7 @@ template <
 
 };
   
-  // partial specializations for HER2K CUBLAS_OP_N layout (ColumMajor)
+  // partial specializations for HER2K HIPBLAS_OP_N layout (ColumMajor)
 template <>
   struct Rank2KTransposedComplexTransform <
   layout::ColumnMajor, layout::ColumnMajor, 
@@ -150,7 +150,7 @@ template <>
 
 };
 
-  // partial specializations for HER2K CUBLAS_OP_C layout (RowMajor + Complex conjugate) 
+  // partial specializations for HER2K HIPBLAS_OP_C layout (RowMajor + Complex conjugate) 
 template <>
   struct Rank2KTransposedComplexTransform <
   layout::RowMajor, layout::RowMajor, 

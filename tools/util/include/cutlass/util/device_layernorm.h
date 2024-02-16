@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2017 - 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
@@ -55,7 +56,7 @@ void layernorm(cutlass::MatrixCoord tensor_size,
                TensorRef<T, layout::RowMajor> ref_input,
                TensorRef<T, layout::RowMajor> ref_gamma,
                TensorRef<T, layout::RowMajor> ref_beta,
-               cudaStream_t stream);
+               hipStream_t stream);
 
 /**
  * output [m, n] row-major
@@ -443,7 +444,7 @@ void layernorm(cutlass::MatrixCoord tensor_size,
                TensorRef<T, layout::RowMajor> ref_input,
                TensorRef<T, layout::RowMajor> ref_gamma,
                TensorRef<T, layout::RowMajor> ref_beta,
-               cudaStream_t stream){
+               hipStream_t stream){
   const int m = tensor_size.row();
   const int n = tensor_size.column();
   T* output = ref_output.data();
@@ -460,7 +461,7 @@ void layernorm(cutlass::MatrixCoord tensor_size,
   if ((n % 4 == 0) && (n >= 128) && (n <= 4096)) {
     block.x = (n/4 + 31)/32*32;
     if (std::is_same<T, float>::value) {
-      layernorm_twoPassAlgo_stored_locally_e4<float4, float, 1><<<grid, block, 0, stream>>>(
+     hipLaunchKernelGGL(( layernorm_twoPassAlgo_stored_locally_e4<float4, float, 1>), dim3(grid), dim3(block), 0, stream, 
         (float4*)output,
         (const float4*)input,
         (const float4*)gamma,
@@ -469,7 +470,7 @@ void layernorm(cutlass::MatrixCoord tensor_size,
         n);
     } // if (std::is_same<T, float>::value)
     else {
-      layernorm_twoPassAlgo_stored_locally_e4<half4, half, 1><<<grid, block, 0, stream>>>(
+     hipLaunchKernelGGL(( layernorm_twoPassAlgo_stored_locally_e4<half4, half, 1>), dim3(grid), dim3(block), 0, stream, 
         (half4*)output,
         (const half4*)input,
         (const half4*)gamma,
@@ -482,7 +483,7 @@ void layernorm(cutlass::MatrixCoord tensor_size,
     if (n / 2 <= 1024) {
       block.x = (n/2 + 31)/32*32;
       if (std::is_same<T, float>::value) {
-        layernorm_twoPassAlgo_stored_locally_e2<float2, float, 1><<<grid, block, 0, stream>>>(
+       hipLaunchKernelGGL(( layernorm_twoPassAlgo_stored_locally_e2<float2, float, 1>), dim3(grid), dim3(block), 0, stream, 
           (float2*)output,
           (const float2*)input,
           (const float2*)gamma,
@@ -491,7 +492,7 @@ void layernorm(cutlass::MatrixCoord tensor_size,
           n);
       } //if (std::is_same<T, float>::value)
       else {
-        layernorm_twoPassAlgo_stored_locally_e2<half2, half, 1><<<grid, block, 0, stream>>>(
+       hipLaunchKernelGGL(( layernorm_twoPassAlgo_stored_locally_e2<half2, half, 1>), dim3(grid), dim3(block), 0, stream, 
           (half2*)output,
           (const half2*)input,
           (const half2*)gamma,
@@ -503,7 +504,7 @@ void layernorm(cutlass::MatrixCoord tensor_size,
     else if (n <= 8192) {
       block.x = ((n + 7)/8 + 31)/32*32;
       if (std::is_same<T, float>::value) {
-        layernorm_twoPassAlgo_stored_locally_e2<float2, float, 4><<<grid, block, 0, stream>>>(
+       hipLaunchKernelGGL(( layernorm_twoPassAlgo_stored_locally_e2<float2, float, 4>), dim3(grid), dim3(block), 0, stream, 
           (float2*)output,
           (const float2*)input,
           (const float2*)gamma,
@@ -512,7 +513,7 @@ void layernorm(cutlass::MatrixCoord tensor_size,
           n);
       } // if (std::is_same<T, float>::value)
       else {
-        layernorm_twoPassAlgo_stored_locally_e2<half2, half, 4><<<grid, block, 0, stream>>>(
+       hipLaunchKernelGGL(( layernorm_twoPassAlgo_stored_locally_e2<half2, half, 4>), dim3(grid), dim3(block), 0, stream, 
           (half2*)output,
           (const half2*)input,
           (const half2*)gamma,
@@ -524,7 +525,7 @@ void layernorm(cutlass::MatrixCoord tensor_size,
     else if (n <= 16384) {
       block.x = ((n + 15)/ 16 + 31)/32*32;
       if (std::is_same<T, float>::value) {
-        layernorm_twoPassAlgo_stored_locally_e2<float2, float, 8><<<grid, block, 0, stream>>>(
+       hipLaunchKernelGGL(( layernorm_twoPassAlgo_stored_locally_e2<float2, float, 8>), dim3(grid), dim3(block), 0, stream, 
           (float2*)output,
           (const float2*)input,
           (const float2*)gamma,
@@ -533,7 +534,7 @@ void layernorm(cutlass::MatrixCoord tensor_size,
           n);
       } // if (std::is_same<T, float>::value)
       else {
-        layernorm_twoPassAlgo_stored_locally_e2<half2, half, 8><<<grid, block, 0, stream>>>(
+       hipLaunchKernelGGL(( layernorm_twoPassAlgo_stored_locally_e2<half2, half, 8>), dim3(grid), dim3(block), 0, stream, 
           (half2*)output,
           (const half2*)input,
           (const half2*)gamma,
@@ -545,7 +546,7 @@ void layernorm(cutlass::MatrixCoord tensor_size,
     else if (n <= 32768) {
       block.x = ((n + 31)/32 + 31)/32*32;
       if (std::is_same<T, float>::value) {
-        layernorm_twoPassAlgo_stored_locally_e2<float2, float, 16><<<grid, block, 0, stream>>>(
+       hipLaunchKernelGGL(( layernorm_twoPassAlgo_stored_locally_e2<float2, float, 16>), dim3(grid), dim3(block), 0, stream, 
           (float2*)output,
           (const float2*)input,
           (const float2*)gamma,
@@ -554,7 +555,7 @@ void layernorm(cutlass::MatrixCoord tensor_size,
           n);
       } // if (std::is_same<T, float>::value)
       else {
-        layernorm_twoPassAlgo_stored_locally_e2<half2, half, 16><<<grid, block, 0, stream>>>(
+       hipLaunchKernelGGL(( layernorm_twoPassAlgo_stored_locally_e2<half2, half, 16>), dim3(grid), dim3(block), 0, stream, 
           (half2*)output,
           (const half2*)input,
           (const half2*)gamma,
@@ -567,7 +568,7 @@ void layernorm(cutlass::MatrixCoord tensor_size,
       if (block.x > 512)
         block.x = 512;
       if (std::is_same<T, float>::value) {
-        layernorm_twoPassAlgo_e2<float2, float><<<grid, block, 0, stream>>>(
+       hipLaunchKernelGGL(( layernorm_twoPassAlgo_e2<float2, float>), dim3(grid), dim3(block), 0, stream, 
           (float2 *)output, 
           (const float2 *)input,
           (const float2 *)gamma, 
@@ -576,7 +577,7 @@ void layernorm(cutlass::MatrixCoord tensor_size,
           n);
       } // if (std::is_same<T, float>::value)
       else {
-        layernorm_twoPassAlgo_e2<half2, half><<<grid, block, 0, stream>>>(
+       hipLaunchKernelGGL(( layernorm_twoPassAlgo_e2<half2, half>), dim3(grid), dim3(block), 0, stream, 
           (half2 *)output,
           (const half2 *)input,
           (const half2 *)gamma,
@@ -588,7 +589,7 @@ void layernorm(cutlass::MatrixCoord tensor_size,
   } // if (n % 2 == 0)
   else {
     if (n <= 1024) {
-      layernorm_twoPassAlgo_stored_locally_e1<T, 1><<<grid, block, 0, stream>>>(
+     hipLaunchKernelGGL(( layernorm_twoPassAlgo_stored_locally_e1<T, 1>), dim3(grid), dim3(block), 0, stream, 
         output, 
         input, 
         gamma, 
@@ -598,7 +599,7 @@ void layernorm(cutlass::MatrixCoord tensor_size,
     } // if (n <= 1024)
     else if (n <= 8192) {
       block.x = ((n + 7)/8 + 31)/32*32;
-      layernorm_twoPassAlgo_stored_locally_e1<T, 8><<<grid, block, 0, stream>>>(
+     hipLaunchKernelGGL(( layernorm_twoPassAlgo_stored_locally_e1<T, 8>), dim3(grid), dim3(block), 0, stream, 
         output,
         input,
         gamma,
@@ -608,7 +609,7 @@ void layernorm(cutlass::MatrixCoord tensor_size,
     } // if (n <= 8192)
     else if (n <= 16384) {
       block.x = ((n + 15)/16 + 32)/32*32;
-      layernorm_twoPassAlgo_stored_locally_e1<T, 16><<<grid, block, 0, stream>>>(
+     hipLaunchKernelGGL(( layernorm_twoPassAlgo_stored_locally_e1<T, 16>), dim3(grid), dim3(block), 0, stream, 
         output,
         input,
         gamma,
@@ -618,7 +619,7 @@ void layernorm(cutlass::MatrixCoord tensor_size,
     } // if (n <= 16384)
     else if (n <= 32768) {
       block.x = ((n + 31)/32 + 31)/32*32;
-      layernorm_twoPassAlgo_stored_locally_e1<T, 32><<<grid, block, 0, stream>>>(
+     hipLaunchKernelGGL(( layernorm_twoPassAlgo_stored_locally_e1<T, 32>), dim3(grid), dim3(block), 0, stream, 
         output,
         input,
         gamma,
@@ -630,7 +631,7 @@ void layernorm(cutlass::MatrixCoord tensor_size,
       if (block.x > 512) {
         block.x = 512;
       }
-      layernorm_twoPassAlgo_e1<<<grid, block, 0, stream>>>(
+     hipLaunchKernelGGL(( layernorm_twoPassAlgo_e1), dim3(grid), dim3(block), 0, stream, 
         output, 
         input, 
         gamma, 

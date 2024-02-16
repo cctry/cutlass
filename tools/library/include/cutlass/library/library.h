@@ -51,7 +51,7 @@
 #include <string>
 #include <cstdint>
 #include <stdexcept>
-#include <cuda_runtime.h>
+#include <hip/hip_runtime.h>
 
 #include "cutlass/cutlass.h"
 #include "cutlass/library/types.h"
@@ -101,13 +101,13 @@ public:
     void const *configuration,
     void *host_workspace,
     void *device_workspace = nullptr,
-    cudaStream_t stream = nullptr) const = 0;
+    hipStream_t stream = nullptr) const = 0;
 
   virtual Status run(
     void const *arguments,
     void *host_workspace,
     void *device_workspace = nullptr,
-    cudaStream_t stream = nullptr) const = 0;
+    hipStream_t stream = nullptr) const = 0;
 
 };
 

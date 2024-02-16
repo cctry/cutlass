@@ -280,7 +280,7 @@ struct CollectiveMma<
 
   template <class ProblemShape>
   static cutlass::Status
-  initialize_workspace(ProblemShape const& problem_shape, Arguments const& args, void* workspace, cudaStream_t stream) {
+  initialize_workspace(ProblemShape const& problem_shape, Arguments const& args, void* workspace, hipStream_t stream) {
     return cutlass::Status::kSuccess;
   }
 

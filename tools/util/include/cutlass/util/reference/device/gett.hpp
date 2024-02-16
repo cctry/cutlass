@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /***************************************************************************************************
  * Copyright (c) 2023 - 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
@@ -123,7 +124,7 @@ gett(
     ElementC const* ptr_C, StrideC stride_c_mnl,
     ElementD      * ptr_D, StrideD stride_d_mnl,
     ElementEpilogue alpha, ElementEpilogue beta,
-    cudaStream_t stream = 0) {
+    hipStream_t stream = 0) {
   using namespace cute;
 
   static_assert(cute::rank(ProblemShapeMNKL{}) == 4);
@@ -140,7 +141,7 @@ gett(
 
   dim3 dimBlock(256);
   dim3 dimGrid(240);
-  gett_kernel<<< dimGrid, dimBlock, 0, stream >>>(D, A, B, C, alpha, beta, ElementAccumulator(0));
+ hipLaunchKernelGGL(( gett_kernel),  dim3(dimGrid), dim3(dimBlock), 0, stream , D, A, B, C, alpha, beta, ElementAccumulator(0));
 }
 
 } // namespace cutlass::reference::device

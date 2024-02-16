@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /***************************************************************************************************
  * Copyright (c) 2017 - 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
@@ -99,7 +100,7 @@ void compute_gemm(
   );
 
   // Launch a GEMM kernel
-  kernel::Gemm<
+ hipLaunchKernelGGL(( kernel::Gemm<
     TensorRef<ElementA, LayoutA>,
     TensorRef<ElementB, LayoutB>,
     TensorRef<ElementC, LayoutC>,
@@ -108,7 +109,7 @@ void compute_gemm(
     OutputTile,
     InnerProductOp,
     ConvertOp
-  ><<< grid, block >>>(
+  >),  dim3(grid), dim3(block) , 0, 0, 
     problem_size,
     alpha,
     tensor_a,
@@ -334,7 +335,7 @@ void BatchedGemm(
   );
 
   // Launch a GEMM kernel
-  kernel::BatchedGemm<
+ hipLaunchKernelGGL(( kernel::BatchedGemm<
     TensorRefCollectionA,
     TensorRefCollectionB,
     TensorRefCollectionC,
@@ -343,7 +344,7 @@ void BatchedGemm(
     OutputTile,
     InnerProductOp,
     ConvertOp
-  ><<< grid, block >>>(
+  >),  dim3(grid), dim3(block) , 0, 0, 
     problem_size,
     alpha,
     tensor_a,

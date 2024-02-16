@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /***************************************************************************************************
  * Copyright (c) 2017 - 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
@@ -209,7 +210,7 @@ public:
   }
 
   /// Initializes SYRK state from arguments.
-  Status initialize(Arguments const &args, void *workspace = nullptr, cudaStream_t stream = nullptr) {
+  Status initialize(Arguments const &args, void *workspace = nullptr, hipStream_t stream = nullptr) {
     
     // Determine grid shape
     ThreadblockSwizzle threadblock_swizzle;
@@ -227,9 +228,9 @@ public:
 
         size_t bytes = get_workspace_size(args);
       
-        cudaError_t result = cudaMemsetAsync(workspace, 0, bytes, stream);
+        hipError_t result = hipMemsetAsync(workspace, 0, bytes, stream);
 
-        if (result != cudaSuccess) {
+        if (result != hipSuccess) {
           return Status::kErrorInternal;
         }
       }
@@ -254,11 +255,11 @@ public:
     int smem_size = int(sizeof(typename RankKkernel::SharedStorage));
     
     if (smem_size >= (48 << 10)) {
-      cudaError_t result = cudaFuncSetAttribute(Kernel<RankKkernel>,
-                                    cudaFuncAttributeMaxDynamicSharedMemorySize,
+      hipError_t result = hipFuncSetAttribute(Kernel<RankKkernel>,
+                                    hipFuncAttributeMaxDynamicSharedMemorySize,
                                     smem_size);
 
-      if (result != cudaSuccess) {
+      if (result != hipSuccess) {
         return Status::kErrorInternal;
       }
     }
@@ -287,7 +288,7 @@ public:
   }
 
   /// Runs the kernel using initialized state.
-  Status run(cudaStream_t stream = nullptr) {
+  Status run(hipStream_t stream = nullptr) {
 
     ThreadblockSwizzle threadblock_swizzle;
 
@@ -296,15 +297,15 @@ public:
 
     int smem_size = int(sizeof(typename RankKkernel::SharedStorage));
 
-    cutlass::Kernel<RankKkernel><<<grid, block, smem_size, stream>>>(params_);
+   hipLaunchKernelGGL(( cutlass::Kernel<RankKkernel>), dim3(grid), dim3(block), smem_size, stream, params_);
 
-    cudaError_t result = cudaGetLastError();
+    hipError_t result = hipGetLastError();
 
-    return result == cudaSuccess ? Status::kSuccess : Status::kErrorInternal;
+    return result == hipSuccess ? Status::kSuccess : Status::kErrorInternal;
   }
 
   /// Runs the kernel using initialized state.
-  Status operator()(cudaStream_t stream = nullptr) {
+  Status operator()(hipStream_t stream = nullptr) {
     return run(stream);
   }
 
@@ -312,7 +313,7 @@ public:
   Status operator()(
     Arguments const &args, 
     void *workspace = nullptr, 
-    cudaStream_t stream = nullptr) {
+    hipStream_t stream = nullptr) {
     
     Status status = initialize(args, workspace);
     
@@ -463,7 +464,7 @@ public:
   }
 
   /// Initializes RankK state from arguments.
-  Status initialize(Arguments const &args, void *workspace = nullptr, cudaStream_t stream = nullptr) {
+  Status initialize(Arguments const &args, void *workspace = nullptr, hipStream_t stream = nullptr) {
 
     return underlying_operator_.initialize(to_underlying_arguments(args), workspace, stream);
   }
@@ -475,13 +476,13 @@ public:
   }
 
   /// Runs the kernel using initialized state.
-  Status run(cudaStream_t stream = nullptr) {
+  Status run(hipStream_t stream = nullptr) {
 
     return underlying_operator_.run(stream);
   }
 
   /// Runs the kernel using initialized state.
-  Status operator()(cudaStream_t stream = nullptr) {
+  Status operator()(hipStream_t stream = nullptr) {
     return run(stream);
   }
 
@@ -489,7 +490,7 @@ public:
   Status operator()(
     Arguments const &args, 
     void *workspace = nullptr, 
-    cudaStream_t stream = nullptr) {
+    hipStream_t stream = nullptr) {
     
     Status status = initialize(args, workspace, stream);
     

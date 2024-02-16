@@ -34,7 +34,7 @@
 
 #pragma once
 
-#include <cuda_runtime.h>
+#include <hip/hip_runtime.h>
 #include "cutlass/cutlass.h"
 
 namespace cutlass {
@@ -44,7 +44,7 @@ namespace profiler {
 
 struct GpuTimer {
 
-  cudaEvent_t events[2];
+  hipEvent_t events[2];
 
   //
   // Methods
@@ -54,13 +54,13 @@ struct GpuTimer {
   ~GpuTimer();
 
   /// Records a start event in the stream
-  void start(cudaStream_t stream = nullptr);
+  void start(hipStream_t stream = nullptr);
 
   /// Records a stop event in the stream
-  void stop(cudaStream_t stream = nullptr);
+  void stop(hipStream_t stream = nullptr);
 
   /// Records a stop event in the stream and synchronizes on the stream
-  void stop_and_wait(cudaStream_t stream = nullptr);
+  void stop_and_wait(hipStream_t stream = nullptr);
 
   /// Returns the duration in milliseconds
   double duration(int iterations = 1) const;

@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /***************************************************************************************************
  * Copyright (c) 2017 - 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
@@ -233,8 +234,12 @@ public:
   Status initialize(
     Arguments const &args, 
     void *workspace = nullptr, 
+<<<<<<< HEAD
     cudaStream_t stream = nullptr,
     CudaHostAdapter *cuda_adapter = nullptr) {
+=======
+    hipStream_t stream = nullptr) {
+>>>>>>> dfa93ce8 (hipify other headers)
    
     if (args.problem_size.split_k_slices > 1) {
 
@@ -242,9 +247,9 @@ public:
         return Status::kErrorWorkspaceNull;
       }
 
-      cudaError_t status = cudaMemsetAsync(workspace, 0, get_workspace_size(args), stream);
+      hipError_t status = hipMemsetAsync(workspace, 0, get_workspace_size(args), stream);
 
-      if (status != cudaSuccess) {
+      if (status != hipSuccess) {
         return Status::kErrorInternal;
       }
     }
@@ -255,6 +260,7 @@ public:
     	static_cast<int *>(workspace)
     );
 
+<<<<<<< HEAD
     if constexpr (kEnableCudaHostAdapter) {
       CUTLASS_ASSERT(cuda_adapter);
       return Status::kSuccess;
@@ -270,6 +276,15 @@ public:
         if (result != cudaSuccess) {
           return Status::kErrorInternal;
         }
+=======
+    if (smem_size >= (48 << 10)) {
+      hipError_t result = hipFuncSetAttribute(cutlass::Kernel<UnderlyingKernel>,
+                                    hipFuncAttributeMaxDynamicSharedMemorySize,
+                                    smem_size);
+
+      if (result != hipSuccess) {
+        return Status::kErrorInternal;
+>>>>>>> dfa93ce8 (hipify other headers)
       }
     }
     
@@ -291,7 +306,11 @@ public:
   }
 
   /// Runs the kernel using initialized state.
+<<<<<<< HEAD
   Status run(cudaStream_t stream = nullptr, CudaHostAdapter *cuda_adapter = nullptr) {
+=======
+  Status run(hipStream_t stream = nullptr) {
+>>>>>>> dfa93ce8 (hipify other headers)
 
 
     ThreadblockSwizzle threadblock_swizzle;
@@ -302,6 +321,7 @@ public:
     int smem_size = int(sizeof(typename UnderlyingKernel::SharedStorage));
     cutlass::Status launch_result = cutlass::Status::kSuccess ;
 
+<<<<<<< HEAD
     if constexpr (kEnableCudaHostAdapter) {
         //
         // Use the cuda host adapter
@@ -335,13 +355,29 @@ public:
   /// Runs the kernel using initialized state.
   Status operator()(cudaStream_t stream = nullptr, CudaHostAdapter *cuda_adapter = nullptr) {
     return run(stream, cuda_adapter);
+=======
+   hipLaunchKernelGGL(( cutlass::Kernel<UnderlyingKernel>), dim3(grid), dim3(block), smem_size, stream, params_);
+
+    hipError_t result = hipGetLastError();
+
+    return result == hipSuccess ? Status::kSuccess : Status::kErrorInternal;
+  }
+
+  /// Runs the kernel using initialized state.
+  Status operator()(hipStream_t stream = nullptr) {
+    return run(stream);
+>>>>>>> dfa93ce8 (hipify other headers)
   }
 
   /// Runs the kernel using initialized state.
   Status operator()(
     Arguments const &args, 
     void *workspace = nullptr, 
+<<<<<<< HEAD
     cudaStream_t stream = nullptr, CudaHostAdapter *cuda_adapter = nullptr) {
+=======
+    hipStream_t stream = nullptr) {
+>>>>>>> dfa93ce8 (hipify other headers)
     
     Status status = initialize(args, workspace, stream, cuda_adapter);
     

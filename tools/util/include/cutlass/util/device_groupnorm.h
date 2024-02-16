@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /******************************************************************************
  * Copyright (c) 2017 - 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
@@ -57,7 +58,7 @@ void groupnorm(cutlass::Tensor4DCoord input_size,
                TensorRef<T, layout::TensorNHWC> ref_input,
                TensorRef<T, layout::TensorNHWC> ref_gamma,
                TensorRef<T, layout::TensorNHWC> ref_beta,
-               cudaStream_t stream);
+               hipStream_t stream);
 
 extern __shared__ char groupnorm_shm[];
 
@@ -323,7 +324,7 @@ void groupnorm(cutlass::Tensor4DCoord input_size,
                TensorRef<T, layout::TensorNHWC> ref_input,
                TensorRef<T, layout::TensorNHWC> ref_gamma,
                TensorRef<T, layout::TensorNHWC> ref_beta,
-               cudaStream_t stream){
+               hipStream_t stream){
   const int N = input_size.n();
   const int H = input_size.h();
   const int W = input_size.w();
@@ -358,21 +359,21 @@ void groupnorm(cutlass::Tensor4DCoord input_size,
     // ensure shared memory is smaller than 48KB
     if (std::is_same<T, float>::value){
       if (shm_size < 48 * 1024) {
-        groupnorm_twopass_store_locally<float2, T, T_PER_TVec><<<grid, block, shm_size, stream>>>(
+       hipLaunchKernelGGL(( groupnorm_twopass_store_locally<float2, T, T_PER_TVec>), dim3(grid), dim3(block), shm_size, stream, 
           output, input, gamma, beta, num_groups, prod_dim1_to_last_dim, last_dim, eps, TVec_PER_THREAD);
       }
       else {
-        groupnorm_twopass_multiple_load<float2, T, T_PER_TVec><<<grid, block, 0, stream>>>(
+       hipLaunchKernelGGL(( groupnorm_twopass_multiple_load<float2, T, T_PER_TVec>), dim3(grid), dim3(block), 0, stream, 
           output, input, gamma, beta, num_groups, prod_dim1_to_last_dim, last_dim, eps, TVec_PER_THREAD);
       }
     }
     else{
       if (shm_size < 48 * 1024) {
-        groupnorm_twopass_store_locally<half2, T, T_PER_TVec><<<grid, block, shm_size, stream>>>(
+       hipLaunchKernelGGL(( groupnorm_twopass_store_locally<half2, T, T_PER_TVec>), dim3(grid), dim3(block), shm_size, stream, 
           output, input, gamma, beta, num_groups, prod_dim1_to_last_dim, last_dim, eps, TVec_PER_THREAD);
       }
       else {
-        groupnorm_twopass_multiple_load<half2, T, T_PER_TVec><<<grid, block, 0, stream>>>(
+       hipLaunchKernelGGL(( groupnorm_twopass_multiple_load<half2, T, T_PER_TVec>), dim3(grid), dim3(block), 0, stream, 
           output, input, gamma, beta, num_groups, prod_dim1_to_last_dim, last_dim, eps, TVec_PER_THREAD);
       }
     }
@@ -388,11 +389,11 @@ void groupnorm(cutlass::Tensor4DCoord input_size,
     const int TVec_PER_THREAD = (s_reduce_elements / T_PER_TVec + threadblock_size - 1) / threadblock_size;
     const int shm_size = T_PER_TVec * TVec_PER_THREAD * threadblock_size * sizeof(T);
     if (shm_size < 48 * 1024) {
-      groupnorm_twopass_store_locally<T, T, T_PER_TVec><<<grid, block, shm_size, stream>>>(
+     hipLaunchKernelGGL(( groupnorm_twopass_store_locally<T, T, T_PER_TVec>), dim3(grid), dim3(block), shm_size, stream, 
         output, input, gamma, beta, num_groups, prod_dim1_to_last_dim, last_dim, eps, TVec_PER_THREAD);
     }
     else {
-      groupnorm_twopass_multiple_load<T, T, T_PER_TVec><<<grid, block, 0, stream>>>(
+     hipLaunchKernelGGL(( groupnorm_twopass_multiple_load<T, T, T_PER_TVec>), dim3(grid), dim3(block), 0, stream, 
         output, input, gamma, beta, num_groups, prod_dim1_to_last_dim, last_dim, eps, TVec_PER_THREAD);
     }
   }

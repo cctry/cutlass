@@ -279,9 +279,14 @@ public:
 
   template <class ProblemShape>
   static cutlass::Status
+<<<<<<< HEAD
   initialize_workspace(ProblemShape const& problem_shape, Arguments const& args, void* workspace, cudaStream_t stream, 
     CudaHostAdapter* cuda_adapter = nullptr) {
     return FusionCallbacks::initialize_workspace(problem_shape, args.thread, workspace, stream, cuda_adapter);
+=======
+  initialize_workspace(ProblemShape const& problem_shape, Arguments const& args, void* workspace, hipStream_t stream) {
+    return FusionCallbacks::initialize_workspace(problem_shape, args.thread, workspace, stream);
+>>>>>>> dfa93ce8 (hipify other headers)
   }
 
   template <class ProblemShape>

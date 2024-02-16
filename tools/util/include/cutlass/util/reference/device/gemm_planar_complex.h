@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /***************************************************************************************************
  * Copyright (c) 2017 - 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
@@ -243,7 +244,7 @@ void GemmPlanarComplex(
     (problem_size.n() + block.y * kNblock - 1) / (block.y * kNblock),
     1);
 
-  kernel::GemmPlanarComplex<
+ hipLaunchKernelGGL(( kernel::GemmPlanarComplex<
     ElementA, LayoutA,
     ElementB, LayoutB,
     ElementC, LayoutC,
@@ -251,7 +252,7 @@ void GemmPlanarComplex(
     ComputeType,
     ConvertOp,
     InnerProductOp
-  ><<< grid, block >>>(
+  >),  dim3(grid), dim3(block) , 0, 0, 
     problem_size,
     alpha,
     tensor_a,

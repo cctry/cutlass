@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /***************************************************************************************************
  * Copyright (c) 2017 - 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
@@ -236,7 +237,7 @@ void GemmComplex(
   );
 
   if (grid.y <= std::numeric_limits<uint16_t>::max()) {
-    kernel::GemmComplex<
+   hipLaunchKernelGGL(( kernel::GemmComplex<
       ElementA,
       LayoutA,
       ElementB,
@@ -250,7 +251,7 @@ void GemmComplex(
       InnerProductOp,
       kMblock,
       kNblock
-    ><<< grid, block >>>(
+    >),  dim3(grid), dim3(block) , 0, 0, 
       problem_size,
       alpha,
       tensor_a,
@@ -279,7 +280,7 @@ void GemmComplex(
       batch_count % std::numeric_limits<uint16_t>::max()
     );
 
-    kernel::GemmComplex<
+   hipLaunchKernelGGL(( kernel::GemmComplex<
       ElementA,
       LayoutA,
       ElementB,
@@ -293,7 +294,7 @@ void GemmComplex(
       InnerProductOp,
       kBigMblock,
       kBigNblock
-    ><<< Biggrid, Bigblock >>>(
+    >),  dim3(Biggrid), dim3(Bigblock) , 0, 0, 
       problem_size,
       alpha,
       tensor_a,

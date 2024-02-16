@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /***************************************************************************************************
  * Copyright (c) 2017 - 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
@@ -276,7 +277,7 @@ void Rank2KComplex(
     batch_count % std::numeric_limits<uint16_t>::max()
   );
 
-  kernel::Rank2KComplex<
+ hipLaunchKernelGGL(( kernel::Rank2KComplex<
     ElementA,
     LayoutA,
     ElementB,
@@ -289,7 +290,7 @@ void Rank2KComplex(
     InnerProductOp,
     kMblock,
     kNblock
-  ><<< grid, block >>>(
+  >),  dim3(grid), dim3(block) , 0, 0, 
     problem_size,
     alpha,
     tensor_a,

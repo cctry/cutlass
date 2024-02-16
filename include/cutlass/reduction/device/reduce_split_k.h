@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /***************************************************************************************************
  * Copyright (c) 2017 - 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
@@ -142,7 +143,7 @@ public:
   Status initialize(
     Arguments const &args, 
     void *workspace = nullptr, 
-    cudaStream_t stream = nullptr) {
+    hipStream_t stream = nullptr) {
     
     // initialize the params structure from the arguments
     params_ = typename ReductionKernel::Params(
@@ -174,7 +175,7 @@ public:
   }
 
   /// Runs the kernel using initialized state.
-  Status run(cudaStream_t stream = nullptr) {
+  Status run(hipStream_t stream = nullptr) {
 
     //
     // Launch reduction kernel
@@ -182,16 +183,16 @@ public:
     dim3 block = ReductionKernel::block_shape();
     dim3 grid = ReductionKernel::grid_shape(params_.problem_size);
 
-    Kernel<ReductionKernel><<< grid, block, 0, stream >>>(params_);
+   hipLaunchKernelGGL(( Kernel<ReductionKernel>),  dim3(grid), dim3(block), 0, stream , params_);
 
-    cudaError_t result = cudaGetLastError();
+    hipError_t result = hipGetLastError();
 
-    return result == cudaSuccess ? Status::kSuccess : Status::kErrorInternal;
+    return result == hipSuccess ? Status::kSuccess : Status::kErrorInternal;
   }
 
 
   /// Runs the kernel using initialized state.
-  Status operator()(cudaStream_t stream = nullptr) {
+  Status operator()(hipStream_t stream = nullptr) {
     return run(stream);
   }
 
@@ -199,7 +200,7 @@ public:
   Status operator()(
     Arguments const &args, 
     void *workspace = nullptr, 
-    cudaStream_t stream = nullptr) {
+    hipStream_t stream = nullptr) {
     
     Status status = initialize(args, workspace, stream);
     

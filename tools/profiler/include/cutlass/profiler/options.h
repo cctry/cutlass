@@ -38,7 +38,7 @@
 #include <vector>
 #include <map>
 
-#include <cuda_runtime.h>
+#include <hip/hip_runtime.h>
 
 #include "cutlass/util/command_line.h"
 #include "cutlass/util/distribution.h"
@@ -85,7 +85,7 @@ public:
     int device;
 
     /// CUDA Device properties
-    cudaDeviceProp properties;
+    hipDeviceProp_t properties;
 
     /// Total memory allocation on device
     size_t maximum_capacity;

@@ -33,8 +33,13 @@
 #include "cutlass/conv/convolution.h"
 #include "cutlass/arch/arch.h"
 
+<<<<<<< HEAD:include/cutlass/conv/dispatch_policy.hpp
 #include "cute/layout.hpp"
 #include "cute/numeric/integral_constant.hpp"
+=======
+#include <hip/hip_vector_types.h>
+#include <cutlass/numeric_types.h>
+>>>>>>> dfa93ce8 (hipify other headers):include/cute/numeric/tfloat.hpp
 
 //////////////////////////////////////////////////////////////////////////////
 

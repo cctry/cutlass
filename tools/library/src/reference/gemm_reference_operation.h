@@ -181,7 +181,7 @@ public:
     void const *configuration,
     void *host_workspace,
     void *device_workspace = nullptr,
-    cudaStream_t stream = nullptr) const {
+    hipStream_t stream = nullptr) const {
 
     std::memcpy(host_workspace, configuration, get_host_workspace_size(configuration));
 
@@ -192,7 +192,7 @@ public:
     void const *arguments,
     void *host_workspace,
     void *device_workspace = nullptr,
-    cudaStream_t stream = nullptr) const {
+    hipStream_t stream = nullptr) const {
 
     GemmUniversalConfiguration const &config = *static_cast<GemmUniversalConfiguration const *>(host_workspace);
     GemmUniversalArguments const &args = *static_cast<GemmUniversalArguments const *>(arguments);
