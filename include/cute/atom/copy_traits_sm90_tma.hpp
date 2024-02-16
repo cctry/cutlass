@@ -31,7 +31,7 @@
 #pragma once
 
 #if !defined(__CUDACC_RTC__)
-#include <cuda.h>
+#include <hip/hip_runtime.h>
 #endif
 
 #include <cute/atom/copy_traits_sm90_tma_swizzle.hpp>

@@ -34,7 +34,7 @@
 /// @brief Functions for converting swizzle layout to TMA descriptor
 
 #if !defined(__CUDACC_RTC__)
-#include <cuda.h>
+#include <hip/hip_runtime.h>
 #endif
 
 #include <cute/arch/copy_sm90_desc.hpp>
