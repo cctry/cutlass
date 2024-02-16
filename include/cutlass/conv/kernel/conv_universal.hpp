@@ -31,6 +31,9 @@
 #pragma once
 
 #include "cutlass/detail/dependent_false.hpp"
+#include <cute/config.hpp>
+#include <hip/hip_vector_types.h>
+#include <cutlass/numeric_types.h>
 
 ////////////////////////////////////////////////////////////////////////////////
 

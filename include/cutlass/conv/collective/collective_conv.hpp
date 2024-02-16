@@ -34,6 +34,8 @@
 #include "cutlass/conv/collective/detail.hpp"
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
+#include <hip/hip_vector_types.h>
+#include <cutlass/numeric_types.h>
 
 namespace cutlass::conv::collective {
 
