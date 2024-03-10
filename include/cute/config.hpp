@@ -30,7 +30,7 @@
  *
  **************************************************************************************************/
 #pragma once
-
+#define __forceinline__ __attribute__((always_inline))
 #if defined(__HIPCC__) || defined(_NVHPC_CUDA)
 #  define CUTE_HOST_DEVICE __forceinline__ __host__ __device__
 #  define CUTE_DEVICE      __forceinline__          __device__
