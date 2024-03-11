@@ -133,7 +133,7 @@ CUTE_HOST_DEVICE
 bool
 thread(int tid, int bid)
 {
-#if defined(__CUDA_ARCH__)
+#if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
   return (threadIdx.x + threadIdx.y*blockDim.x + threadIdx.z*blockDim.x*blockDim.y == tid) && block(bid);
 #else
   return true;
