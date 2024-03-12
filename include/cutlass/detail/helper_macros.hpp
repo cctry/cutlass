@@ -47,7 +47,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#if defined(__NVCC__) || (defined(__clang__) && defined(__CUDA__))
+#if defined(__NVCC__) || (defined(__clang__) && defined(__CUDA__)) || defined(__HIP_DEVICE_COMPILE__)
 #define CUTLASS_HOST_DEVICE __forceinline__ __device__ __host__
 #define CUTLASS_DEVICE __forceinline__ __device__
 #elif defined(__CUDACC_RTC__)
