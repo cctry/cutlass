@@ -35,6 +35,7 @@
 
 #pragma once
 
+#include "cutlass/arch/mma.h"
 #include "cutlass/cutlass.h"
 #include "cutlass/numeric_types.h"
 #include "cutlass/arch/arch.h"
